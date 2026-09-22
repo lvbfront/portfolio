@@ -1,0 +1,191 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-gradient-to-b from-white to-sky-50 text-slate-600 antialiased;
+  /* viewport-fit=cover: keep content clear of the notch in landscape */
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-sky-600);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* --- Sky blobs: radial gradients are already soft, so no filter: blur (cheaper to paint) --- */
+.sky {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sky span {
+  position: absolute;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--color-sky-200), transparent 65%);
+  opacity: 0.45;
+  animation: drift 40s ease-in-out infinite alternate;
+}
+.sky span:nth-child(1) { top: -25vmax; left: -15vmax; }
+.sky span:nth-child(2) { top: 20vh; right: -25vmax; background: radial-gradient(circle, var(--color-sky-100), transparent 65%); animation-duration: 55s; }
+.sky span:nth-child(3) { bottom: -30vmax; left: 20vw; opacity: 0.3; animation-duration: 70s; }
+
+@keyframes drift {
+  to { transform: translate(6vmax, 4vmax) scale(1.1); }
+}
+
+/* --- Fade-in on scroll (App adds .in via IntersectionObserver) --- */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --- Scroll progress bar (scroll-driven where supported, else App sets --progress) --- */
+.progress {
+  position: fixed;
+  top: env(safe-area-inset-top);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  height: 3px;
+  background: var(--color-sky-500);
+  transform-origin: 0 50%;
+  transform: scaleX(var(--progress, 0));
+  will-change: transform;
+}
+
+/* --- Mobile mini bar (App toggles .on when the hero card leaves the viewport) --- */
+:root { --bar-h: calc(3.5rem + env(safe-area-inset-top)); }
+@media (max-width: 1023px) {
+  main section { scroll-margin-top: calc(var(--bar-h) + 1rem); } /* anchor jumps land below the bar */
+}
+.minibar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40; /* the progress bar (z 50) draws over its top edge */
+  padding: env(safe-area-inset-top) max(1.5rem, env(safe-area-inset-right)) 0 max(1.5rem, env(safe-area-inset-left));
+  background: rgb(255 255 255 / 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px); /* standard last: the minifier keeps only the last of the pair */
+  border-bottom: 1px solid var(--color-sky-100);
+  opacity: 0;
+  transform: translateY(-100%);
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.25s ease;
+}
+.minibar.on { opacity: 1; transform: none; }
+.minibar-avatar {
+  opacity: 0;
+  transform: scale(0.4);
+  transition: transform 0.45s 0.08s cubic-bezier(0.3, 1.5, 0.5, 1), opacity 0.3s 0.08s ease;
+}
+.minibar.on .minibar-avatar { opacity: 1; transform: none; }
+
+/* --- Profile flip card --- */
+.pc { perspective: 1200px; cursor: pointer; container-type: inline-size; }
+.pc-tap, .pc-inner { transform-style: preserve-3d; }
+.pc-tap { transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.pc[aria-pressed="true"] .pc-tap { transform: rotateY(180deg); }
+.pc-inner {
+  transform: rotateY(calc(var(--flip, 0) * 180deg));
+  will-change: transform;
+}
+.pc-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.pc-back {
+  transform: rotateY(180deg);
+  /* sized from the card's width (cqw) so the highlights fit the 80–160px desktop card and the big mobile one */
+  padding: 7cqw;
+  gap: 4.5cqw;
+}
+.pc-back p {
+  padding: 3.5cqw 5cqw;
+  font-size: clamp(8px, 7cqw, 15px);
+  line-height: 1.3;
+}
+/* Tiny card (short laptop screens): three highlights won't fit legibly, so show just the first. */
+@container (width < 130px) {
+  .pc-back p { font-size: 10px; }
+  .pc-back p:not(:first-child) { display: none; }
+}
+/* Desktop: the sticky column holds ~39rem besides the card, so the card takes what height is left (4:5 card). */
+@media (min-width: 1024px) {
+  .pc-desk { width: clamp(5rem, calc((100vh - 39rem) * 0.8), 10rem); }
+}
+
+@keyframes pc-flip { to { transform: rotateY(180deg); } }
+@keyframes grow { to { transform: scaleX(1); } }
+
+@supports (animation-timeline: scroll()) {
+  .pc-inner {
+    animation: pc-flip linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 25vh; /* mobile: card scrolls away with the page, so finish while it's visible */
+  }
+  @media (min-width: 1024px) {
+    .pc-inner { animation-range: 0 70vh; } /* desktop: card is in the sticky column */
+  }
+  .progress {
+    transform: scaleX(0);
+    animation: grow linear both;
+    animation-timeline: scroll(root);
+  }
+}
+
+/* --- Stacked project cards (mobile): sticky with growing top offset; App sets --s as the next card covers one --- */
+@media (max-width: 1023px) {
+  .stack > li {
+    position: sticky;
+    top: calc(var(--bar-h) + 0.75rem + var(--i) * 0.75rem); /* start below the mini bar */
+    min-height: var(--stack-h, auto);
+    transform: scale(var(--s, 1));
+    transform-origin: 50% 0;
+    will-change: transform;
+  }
+}
+
+/* --- Tags pop in with a stagger once their list is on screen (App adds .in) --- */
+@media (prefers-reduced-motion: no-preference) {
+  .tags > li {
+    opacity: 0;
+    transform: translateY(6px) scale(0.85);
+    transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+    transition-delay: calc(var(--d) * 60ms);
+  }
+  .tags.in > li {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .sky span { animation: none; }
+  .minibar, .minibar-avatar { transition: none; }
+  /* front only, no flip */
+  .pc-inner, .pc-tap { animation: none; transform: none !important; transition: none; }
+  .pc-back { display: none; }
+}
