@@ -97,10 +97,11 @@ const Tag = ({ i, children }) => (
 )
 
 const Timeline = ({ items }) => (
-  <ol className="space-y-8 border-l border-sky-100">
+  <ol className="timeline relative space-y-8 border-l border-slate-200">
+    <span className="tl-fill" aria-hidden="true" />
+    <span className="tl-cursor" aria-hidden="true" />
     {items.map((x) => (
       <li key={x.role} className="relative pl-6">
-        <span className="absolute -left-[5px] top-2 size-2.5 rounded-full bg-sky-500 ring-4 ring-white" aria-hidden="true" />
         <div className="flex flex-wrap items-baseline justify-between gap-x-4">
           <h3 className="font-semibold text-slate-800">{x.role}</h3>
           <p className="text-sm text-slate-500">{x.date}</p>
@@ -129,6 +130,7 @@ export default function App() {
     const mobile = matchMedia('(max-width: 1023px)')
     const still = matchMedia('(prefers-reduced-motion: reduce)')
     const cards = [...document.querySelectorAll('.stack > li')]
+    const timelines = [...document.querySelectorAll('.timeline')]
 
     // One rAF-throttled pass per scroll: nav highlight, progress fallback, card stacking.
     let raf = 0
@@ -141,6 +143,15 @@ export default function App() {
         : sections.findLast((id) => document.getElementById(id).getBoundingClientRect().top <= 120) ?? sections[0])
 
       if (noTimeline) root.style.setProperty('--progress', scrollY / (root.scrollHeight - innerHeight || 1))
+
+      // Timeline: the dot and the fill follow the scroll; items latch on once the dot reaches them.
+      if (!still.matches) timelines.forEach((ol) => {
+        const r = ol.getBoundingClientRect()
+        const p = Math.min(Math.max((innerHeight * 0.72 - r.top) / r.height, 0), 1)
+        ol.style.setProperty('--p', p)
+        ol.dataset.p = p
+        for (const li of ol.querySelectorAll('li')) if (p >= +li.dataset.at) li.classList.add('lit')
+      })
 
       // Stacked cards: shrink each card as the next one slides over it (reads first, then writes).
       if (mobile.matches && !still.matches) {
@@ -158,6 +169,11 @@ export default function App() {
       root.style.removeProperty('--stack-h')
       cards.forEach((c) => c.style.removeProperty('--s'))
       if (mobile.matches) root.style.setProperty('--stack-h', Math.max(...cards.map((c) => c.offsetHeight)) + 'px')
+      // where each dot sits along its list, as a fraction (dot is ~12px into the item)
+      timelines.forEach((ol) => {
+        ol.style.setProperty('--tl-h', ol.offsetHeight + 'px')
+        for (const li of ol.querySelectorAll('li')) li.dataset.at = (li.offsetTop + 12 - ol.offsetTop) / ol.offsetHeight
+      })
       frame()
     }
     sizeCards()
@@ -210,16 +226,16 @@ export default function App() {
       </a>
 
       <div className="mx-auto max-w-6xl px-6 md:px-12 lg:flex lg:gap-16">
-        <header className="pt-12 pb-12 lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-5/12 lg:flex-col lg:justify-between lg:py-16">
-          <div>
-            <ProfileCard className="pc-desk mx-auto mb-10 w-[70%] max-w-xs lg:mx-0 lg:mb-8" />
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-800">Abdullah</h1>
-            <p className="mt-3 text-lg font-semibold text-slate-800 text-balance">AI Engineer — LLMs, Computer Vision &amp; AI&nbsp;Agents</p>
-            <p className="mt-4 max-w-xs leading-relaxed">
+        <header className="sidecol pt-12 pb-12 lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-5/12 lg:flex-col lg:justify-between lg:py-16">
+          <div className="flex flex-col">
+            <h1 className="order-1 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-800">Abdullah</h1>
+            <ProfileCard className="pc-desk order-2 mx-auto my-8 w-[80%] max-w-[300px] lg:order-first lg:mx-0 lg:mb-8 lg:mt-0" />
+            <p className="order-3 text-lg font-semibold text-slate-800 text-balance lg:mt-3">AI Engineer — LLMs, Computer Vision &amp; AI&nbsp;Agents</p>
+            <p className="order-4 mt-4 max-w-xs leading-relaxed">
               I build AI that reads, sees and acts, from language models and vision systems to voice agents.
             </p>
 
-            <nav aria-label="Sections" className="mt-10 hidden lg:block">
+            <nav aria-label="Sections" className="sidenav order-5 mt-10 hidden lg:block">
               <ul className="space-y-1">
                 {sections.map((id) => (
                   <li key={id}>

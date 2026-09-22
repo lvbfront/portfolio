@@ -72,6 +72,44 @@ body {
   will-change: transform;
 }
 
+/* --- Timeline: sky line draws down a gray track; dots and text light up as it passes (App sets --p) --- */
+.tl-fill {
+  position: absolute;
+  left: -1px;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: var(--color-sky-500);
+  transform-origin: 50% 0;
+  transform: scaleY(var(--p, 0));
+  will-change: transform;
+}
+.tl-fill, .tl-cursor {
+  /* short eased follow so the dot glides with the scroll instead of stepping */
+  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tl-cursor {
+  position: absolute;
+  left: -6px;
+  top: -6px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--color-sky-500);
+  box-shadow: 0 0 0 4px #fff, 0 0 0 6px var(--color-sky-100);
+  transform: translateY(calc(var(--p, 0) * var(--tl-h, 0px)));
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .timeline > li > * {
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+  .timeline > li.lit > * { opacity: 1; transform: none; }
+}
+
 /* --- Mobile mini bar (App toggles .on when the hero card leaves the viewport) --- */
 :root { --bar-h: calc(3.5rem + env(safe-area-inset-top)); }
 @media (max-width: 1023px) {
@@ -118,12 +156,12 @@ body {
 .pc-back {
   transform: rotateY(180deg);
   /* sized from the card's width (cqw) so the highlights fit the 80–160px desktop card and the big mobile one */
-  padding: 7cqw;
-  gap: 4.5cqw;
+  padding: 6cqw;
+  gap: 4cqw;
 }
 .pc-back p {
   padding: 3.5cqw 5cqw;
-  font-size: clamp(8px, 7cqw, 15px);
+  font-size: clamp(8px, 6.5cqw, 19px);
   line-height: 1.3;
 }
 /* Tiny card (short laptop screens): three highlights won't fit legibly, so show just the first. */
@@ -131,9 +169,14 @@ body {
   .pc-back p { font-size: 10px; }
   .pc-back p:not(:first-child) { display: none; }
 }
-/* Desktop: the sticky column holds ~39rem besides the card, so the card takes what height is left (4:5 card). */
 @media (min-width: 1024px) {
-  .pc-desk { width: clamp(5rem, calc((100vh - 39rem) * 0.8), 10rem); }
+  .pc-desk { width: 10rem; }
+  /* Short screens: tighten the column's own spacing rather than shrinking the card. */
+  @media (max-height: 860px) {
+    .sidecol { padding-block: 2rem; }
+    .sidenav { margin-top: 1rem; }
+    .sidenav a { padding-block: 0.25rem; }
+  }
 }
 
 @keyframes pc-flip { to { transform: rotateY(180deg); } }
@@ -185,6 +228,8 @@ body {
   html { scroll-behavior: auto; }
   .sky span { animation: none; }
   .minibar, .minibar-avatar { transition: none; }
+  .tl-fill { transform: none; } /* full line, everything visible */
+  .tl-cursor { display: none; }
   /* front only, no flip */
   .pc-inner, .pc-tap { animation: none; transform: none !important; transition: none; }
   .pc-back { display: none; }
