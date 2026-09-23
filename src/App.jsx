@@ -25,8 +25,8 @@ export default function App() {
 
   useEffect(() => {
     document.title = route === 'cdg'
-      ? 'ClinicalDenoiseGuard — Abdullah'
-      : 'Abdullah — AI Engineer: LLMs, Computer Vision & AI Agents'
+      ? 'ClinicalDenoiseGuard — Abdullah Bukhari'
+      : 'Abdullah Bukhari — AI & Web Engineer'
   }, [route])
 
   return (
