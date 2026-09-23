@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Blob from './Blob.jsx'
+import { onFrame } from '../scroll.js'
 
 const highlights = ['Research @ University of Toronto', 'AI Engineer Intern @ First City', 'KAUST Academy AI Specialization']
 
@@ -12,19 +13,15 @@ export default function ProfileCard({ className = '' }) {
   const ref = useRef(null)
   const [flipped, setFlipped] = useState(false)
 
+  // Supported browsers flip the card with a scroll-driven CSS animation (see .pc-inner in
+  // index.css) and this never runs. The fallback rides the page's single loop.
   useEffect(() => {
     if (CSS.supports('animation-timeline: scroll()')) return
     const el = ref.current
     const desktop = matchMedia('(min-width: 1024px)')
-    let raf = 0
-    const update = () => {
-      raf = 0
+    return onFrame(() => {
       el.style.setProperty('--flip', Math.min(scrollY / (innerHeight * (desktop.matches ? 0.7 : 0.25)), 1))
-    }
-    const onScroll = () => { raf ||= requestAnimationFrame(update) }
-    update()
-    addEventListener('scroll', onScroll, { passive: true })
-    return () => { removeEventListener('scroll', onScroll); cancelAnimationFrame(raf) }
+    })
   }, [])
 
   return (

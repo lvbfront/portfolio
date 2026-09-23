@@ -81,6 +81,13 @@ body {
 }
 
 /* --- Timeline: sky line draws down a gray track; dots and text light up as it passes (App sets --p) --- */
+/* The list is the subject of a view timeline whose scrollport is collapsed to a line at 72% of
+   the viewport: progress runs 0 → 1 as the list's top and then its bottom cross that line —
+   the same mapping the JS fallback computes. */
+.timeline {
+  view-timeline: --tl block;
+  view-timeline-inset: 72% 28%;
+}
 .tl-fill {
   position: absolute;
   left: -1px;
@@ -91,6 +98,15 @@ body {
   transform-origin: 50% 0;
   transform: scale3d(1, 0, 1);
   will-change: transform;
+}
+
+@keyframes tl-fill { to { transform: scale3d(1, 1, 1); } }
+@keyframes tl-cursor { to { transform: translate3d(0, var(--tl-h, 0px), 0); } }
+
+@supports (animation-timeline: view()) {
+  /* position never touches JavaScript here */
+  .tl-fill { animation: tl-fill linear both; animation-timeline: --tl; }
+  .tl-cursor { animation: tl-cursor linear both; animation-timeline: --tl; }
 }
 /* .tl-fill / .tl-cursor are scroll-linked: Home writes their transform every frame, and a
    transition here would make them lag the page. */
@@ -288,6 +304,7 @@ body {
   html { scroll-behavior: auto; }
   .sky span { animation: none; }
   .minibar, .minibar-avatar { transition: none; }
+  .tl-fill, .tl-cursor { animation: none; } /* a running animation would override the line below */
   .tl-fill { transform: none; } /* full line, everything visible */
   .tl-cursor { display: none; }
   .blob-react, [data-mood] .blob-react { transform: none; transition: none; }

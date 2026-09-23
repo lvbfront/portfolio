@@ -149,6 +149,7 @@ export default function Home() {
     const root = document.documentElement
     const mobile = matchMedia('(max-width: 1023px)')
     const still = matchMedia('(prefers-reduced-motion: reduce)')
+    const cssTimelines = CSS.supports('animation-timeline: view()')
     const cards = [...document.querySelectorAll('.stack > li')]
     const lists = [...document.querySelectorAll('.timeline')].map((ol) => ({
       ol,
@@ -173,8 +174,9 @@ export default function Home() {
         lists: lists.map((l) => {
           const top = docTop(l.ol)
           const h = l.ol.offsetHeight
+          l.ol.style.setProperty('--tl-h', h + 'px') // how far the mascot travels, for the CSS animation
           l.items.forEach((li) => { li.dataset.at = (docTop(li) + 12 - top) / h })
-          return { ...l, top, h }
+          return { ...l, top, h, next: 0 }
         }),
         cards: cards.map((c) => ({ el: c, top: docTop(c), h: c.offsetHeight, sticky: parseFloat(getComputedStyle(c).top) || 0 })),
       }
@@ -191,20 +193,27 @@ export default function Home() {
         : geo.sections.findLast((s) => s.top - y <= 120)?.id ?? sections[0]
       if (current !== lastActive) { lastActive = current; setActive(current) }
 
-      // Timeline: the mascot and the fill follow the scroll, on the compositor (translate3d).
+      // Timeline. Position is a CSS scroll-driven animation where supported, so the only work
+      // here is lighting the next item as the line passes it — arithmetic, no layout, and it
+      // stops touching the list once everything is lit.
       if (!still.matches) for (const l of geo.lists) {
+        if (l.next >= l.items.length && cssTimelines) continue
         const p = Math.min(Math.max((geo.line - (l.top - y)) / l.h, 0), 1)
-        l.fill.style.transform = `scale3d(1, ${p.toFixed(4)}, 1)`
-        l.cursor.style.transform = `translate3d(0, ${(p * l.h).toFixed(1)}px, 0)`
-        for (const li of l.items) if (p >= +li.dataset.at) li.classList.add('lit')
+        if (!cssTimelines) {
+          l.fill.style.transform = `scale3d(1, ${p.toFixed(4)}, 1)`
+          l.cursor.style.transform = `translate3d(0, ${(p * l.h).toFixed(1)}px, 0)`
+        }
+        while (l.next < l.items.length && p >= +l.items[l.next].dataset.at) l.items[l.next++].classList.add('lit')
       }
 
-      // Stacked cards: shrink each card as the next one slides over it.
+      // Stacked cards: shrink each card as the next one slides over it. Writes only on change,
+      // so a scroll that doesn't cover anything costs no style recalc.
       if (mobile.matches && !still.matches) {
         const tops = geo.cards.map((c) => Math.max(c.top - y, c.sticky))
         geo.cards.forEach((c, i) => {
           const covered = i < tops.length - 1 ? (tops[i] + c.h - tops[i + 1]) / c.h : 0
-          c.el.style.setProperty('--s', (1 - 0.06 * Math.min(Math.max(covered, 0), 1)).toFixed(3))
+          const v = +(1 - 0.06 * Math.min(Math.max(covered, 0), 1)).toFixed(3)
+          if (v !== c.s) { c.s = v; c.el.style.setProperty('--s', v) }
         })
       }
     }
