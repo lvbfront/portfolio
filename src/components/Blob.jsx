@@ -44,6 +44,13 @@ export default function Blob({ className = '', size = 28, expression = 'normal' 
         </g>
         {/* face on top of the cloth, so crown shows above and forehead below the igal */}
         <circle cx="24" cy="30" r="15" fill={`url(#${id})`} />
+        {/* front drape: cloth hanging below the igal across the top third of the forehead, with
+            three broad scallops (more would muddy at 20px). It rises above the band too, so the
+            igal reads as holding the fabric down, and its edges meet the side falls. */}
+        <path
+          fill={`url(#${id}c)`}
+          d="M11.5 12c-.4 3.6-.2 6.4.4 8.6 2.4-.2 3.6 2.6 5.6 2.6s3.2-2.8 6.5-2.8 4.1 2.8 6.5 2.8 3.2-2.8 5.6-2.6c.6-2.2.8-5 .4-8.6-3-3.4-22-3.4-25 0Z"
+        />
         {/* igal: drawn last, on top of the cloth — a ring seen from the front, so it reads as a
             near-straight band with its ends a little lower than the middle */}
         <path d="M9.5 17.5c5-3.6 24-3.6 29 0" stroke="#0b1220" strokeWidth="4.5" strokeLinecap="round" fill="none" />
