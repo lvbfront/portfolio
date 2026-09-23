@@ -90,13 +90,11 @@ body {
 }
 .tl-cursor {
   position: absolute;
-  left: -6px;
-  top: -6px;
-  width: 11px;
-  height: 11px;
+  left: -11px;
+  top: -11px;
+  line-height: 0;
   border-radius: 50%;
-  background: var(--color-sky-500);
-  box-shadow: 0 0 0 4px #fff, 0 0 0 6px var(--color-sky-100);
+  background: #fff; /* hides the track line behind the mascot */
   transform: translateY(calc(var(--p, 0) * var(--tl-h, 0px)));
   will-change: transform;
 }
@@ -140,7 +138,19 @@ body {
 
 /* --- Profile flip card --- */
 .pc { perspective: 1200px; cursor: pointer; container-type: inline-size; }
-.pc-tap, .pc-inner { transform-style: preserve-3d; }
+.pc-tap, .pc-wobble, .pc-inner { transform-style: preserve-3d; }
+/* one-time nudge so people notice the card turns */
+.pc-wobble { animation: wobble 600ms 900ms ease-in-out 1; }
+@keyframes wobble {
+  50% { transform: rotateY(8deg); }
+}
+.pc-badge {
+  /* rides on the front face, so it's gone once the card turns past 90deg */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition: opacity 0.2s ease;
+}
+.pc[aria-pressed="true"] .pc-badge { opacity: 0; }
 .pc-tap { transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
 .pc[aria-pressed="true"] .pc-tap { transform: rotateY(180deg); }
 .pc-inner {
@@ -198,6 +208,45 @@ body {
   }
 }
 
+/* --- Blob mascot --- */
+.blob { display: block; overflow: visible; }
+.blob-body { transform-origin: 50% 90%; transition: transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1); }
+.blob-eyes { transition: transform 0.25s ease; }
+
+.blob-calm .blob-body, .blob-calm .blob-eyes { animation: none !important; transform: none !important; }
+
+/* Expressions (top bar only): swap eye shapes and tilt the whole mascot. */
+.eyes-happy, .eyes-surprised { opacity: 0; }
+.blob-happy .eyes-normal, .blob-surprised .eyes-normal { opacity: 0; }
+.blob-happy .eyes-happy, .blob-surprised .eyes-surprised { opacity: 1; }
+.eyes-normal, .eyes-happy, .eyes-surprised { transition: opacity 0.25s ease; }
+.blob { transition: transform 0.25s ease; }
+.blob-happy { transform: rotate(10deg) translateY(1px); }
+.blob-surprised { transform: rotate(-10deg) translateY(-1.5px); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .blob-body { animation: blob-bob 8s ease-in-out infinite; }
+  .blob-eyes { animation: blob-blink 8s ease-in-out infinite; transform-origin: 50% 45%; }
+}
+@keyframes blob-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+@keyframes blob-blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.12); }
+}
+.blob:hover .blob-body, .blob:active .blob-body,
+.pc:hover .blob-body, .pc:active .blob-body {
+  animation: none;
+  transform: scale(1.06, 0.9);
+}
+.blob:hover .blob-eyes, .blob:active .blob-eyes,
+.pc:hover .blob-eyes, .pc:active .blob-eyes {
+  animation: none;
+  transform: translateY(-2px);
+}
+
 /* --- Stacked project cards (mobile): sticky with growing top offset; App sets --s as the next card covers one --- */
 @media (max-width: 1023px) {
   .stack > li {
@@ -230,7 +279,9 @@ body {
   .minibar, .minibar-avatar { transition: none; }
   .tl-fill { transform: none; } /* full line, everything visible */
   .tl-cursor { display: none; }
+  .blob { transition: none; }
+  .blob-happy, .blob-surprised { transform: none; }
   /* front only, no flip */
-  .pc-inner, .pc-tap { animation: none; transform: none !important; transition: none; }
+  .pc-inner, .pc-tap, .pc-wobble { animation: none; transform: none !important; transition: none; }
   .pc-back { display: none; }
 }

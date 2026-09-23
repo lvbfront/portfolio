@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { FaGithub, FaLinkedin, FaEnvelope } from 'react-icons/fa6'
 import Contact from './components/Contact.jsx'
 import ProfileCard from './components/ProfileCard.jsx'
+import Blob from './components/Blob.jsx'
 
 const socials = [
   { label: 'GitHub', href: 'https://github.com/lvbfront', Icon: FaGithub },
@@ -96,10 +97,10 @@ const Tag = ({ i, children }) => (
   <li style={{ '--d': i }} className="rounded-full bg-sky-50 border border-sky-100 px-3 py-1 text-xs font-medium text-sky-700">{children}</li>
 )
 
-const Timeline = ({ items }) => (
+const Timeline = ({ items, expression }) => (
   <ol className="timeline relative space-y-8 border-l border-slate-200">
     <span className="tl-fill" aria-hidden="true" />
-    <span className="tl-cursor" aria-hidden="true" />
+    <span className="tl-cursor" aria-hidden="true"><Blob className="blob-calm" size={22} expression={expression} /></span>
     {items.map((x) => (
       <li key={x.role} className="relative pl-6">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4">
@@ -123,6 +124,7 @@ const Section = ({ id, title, reveal = true, children }) => (
 export default function App() {
   const [active, setActive] = useState('about')
   const [showBar, setShowBar] = useState(false)
+  const [expr, setExpr] = useState('normal') // top-bar mascot: reacts to scroll direction
 
   useEffect(() => {
     const root = document.documentElement
@@ -134,8 +136,21 @@ export default function App() {
 
     // One rAF-throttled pass per scroll: nav highlight, progress fallback, card stacking.
     let raf = 0
+    let lastY = scrollY
+    let idle = 0
     const frame = () => {
       raf = 0
+
+      // Top-bar mascot: happy scrolling down, surprised scrolling up, back to normal when still.
+      if (!still.matches) {
+        const dy = scrollY - lastY
+        lastY = scrollY
+        if (Math.abs(dy) > 2) {
+          setExpr(dy > 0 ? 'happy' : 'surprised')
+          clearTimeout(idle)
+          idle = setTimeout(() => setExpr('normal'), 700) // hold it long enough to notice
+        }
+      }
       // Nav highlight: last section whose top has passed 120px (just under scroll-mt-24, so nav
       // clicks always land on the clicked section, even short ones); at page bottom, the last section.
       const atBottom = innerHeight + scrollY >= root.scrollHeight - 2
@@ -196,6 +211,7 @@ export default function App() {
     return () => {
       removeEventListener('scroll', onScroll)
       removeEventListener('resize', sizeCards)
+      clearTimeout(idle)
       cancelAnimationFrame(raf)
       reveal.disconnect()
       barIO.disconnect()
@@ -207,7 +223,7 @@ export default function App() {
       <div className="sky" aria-hidden="true"><span /><span /><span /></div>
       <div className="progress" aria-hidden="true" />
       {/* Mobile only: compact "me" bar once the hero card is off screen. inert while hidden so it isn't focusable. */}
-      <div className={`minibar lg:hidden ${showBar ? 'on' : ''}`} inert={!showBar}>
+      <div className={`minibar flex items-center justify-between lg:hidden ${showBar ? 'on' : ''}`} inert={!showBar}>
         <button
           type="button"
           onClick={() => scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })}
@@ -220,6 +236,7 @@ export default function App() {
             <span className="sr-only">, back to top</span>
           </span>
         </button>
+        <Blob size={28} expression={expr} />
       </div>
       <a href="#about" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-10 focus:bg-white focus:px-4 focus:py-2 focus:rounded-lg">
         Skip to content
@@ -277,11 +294,11 @@ export default function App() {
           </Section>
 
           <Section id="experience" title="Experience">
-            <Timeline items={experience} />
+            <Timeline items={experience} expression={expr} />
           </Section>
 
           <Section id="education" title="Education">
-            <Timeline items={education} />
+            <Timeline items={education} expression={expr} />
             <p className="mt-8 text-sm leading-relaxed"><span className="font-semibold text-slate-800">Certifications:</span> {certifications}</p>
           </Section>
 
