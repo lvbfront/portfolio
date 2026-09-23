@@ -3,12 +3,12 @@ import { useId } from 'react'
 // Decorative mascot: inline SVG, no deps. White ghutra with a black igal over a blue face.
 // The cloth is the dominant shape on purpose: a thinner drape stops reading below ~28px.
 // Idle bob + blink, squish and look up on hover/tap (see .blob in index.css).
-// className="blob-calm" for a still one; expression drives the face (top bar only).
-export default function Blob({ className = '', size = 28, expression = 'normal' }) {
+// className="blob-calm" for a still one; "blob-react" makes the face follow scroll velocity.
+export default function Blob({ className = '', size = 28 }) {
   const id = useId() // two Blobs on the page must not share a gradient id
   return (
     <svg
-      className={`blob blob-${expression} ${className}`}
+      className={`blob ${className}`}
       width={size}
       height={size}
       viewBox="0 0 48 48"
