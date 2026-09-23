@@ -4,6 +4,7 @@ import Contact from '../components/Contact.jsx'
 import ProfileCard from '../components/ProfileCard.jsx'
 import Blob from '../components/Blob.jsx'
 import { useReveal } from '../components/Shell.jsx'
+import { onFrame, requestFrame } from '../scroll.js'
 
 const socials = [
   { label: 'GitHub', href: 'https://github.com/lvbfront', Icon: FaGithub },
@@ -149,58 +150,72 @@ export default function Home() {
     const mobile = matchMedia('(max-width: 1023px)')
     const still = matchMedia('(prefers-reduced-motion: reduce)')
     const cards = [...document.querySelectorAll('.stack > li')]
-    const timelines = [...document.querySelectorAll('.timeline')]
+    const lists = [...document.querySelectorAll('.timeline')].map((ol) => ({
+      ol,
+      fill: ol.querySelector('.tl-fill'),
+      cursor: ol.querySelector('.tl-cursor'),
+      items: [...ol.querySelectorAll('li')],
+    }))
+    let lastActive = null
+    let geo = null
 
-    // One rAF-throttled pass per scroll: nav highlight, timeline, card stacking.
-    let raf = 0
-    const frame = () => {
-      raf = 0
-      // Nav highlight: last section whose top has passed 120px (just under scroll-mt-24, so nav
-      // clicks always land on the clicked section, even short ones); at page bottom, the last section.
-      const atBottom = innerHeight + scrollY >= root.scrollHeight - 2
-      setActive(atBottom ? sections.at(-1)
-        : sections.findLast((id) => document.getElementById(id).getBoundingClientRect().top <= 120) ?? sections[0])
-
-      // Timeline: the mascot and the fill follow the scroll; items latch on once it reaches them.
-      if (!still.matches) timelines.forEach((ol) => {
-        const r = ol.getBoundingClientRect()
-        const p = Math.min(Math.max((innerHeight * 0.72 - r.top) / r.height, 0), 1)
-        ol.style.setProperty('--p', p)
-        ol.dataset.p = p
-        for (const li of ol.querySelectorAll('li')) if (p >= +li.dataset.at) li.classList.add('lit')
-      })
-
-      // Stacked cards: shrink each card as the next one slides over it (reads first, then writes).
-      if (mobile.matches && !still.matches) {
-        const tops = cards.map((c) => c.getBoundingClientRect().top)
-        cards.forEach((c, i) => {
-          const covered = i < cards.length - 1 ? (tops[i] + c.offsetHeight - tops[i + 1]) / c.offsetHeight : 0
-          c.style.setProperty('--s', 1 - 0.06 * Math.min(Math.max(covered, 0), 1))
-        })
-      }
-    }
-    const onScroll = () => { raf ||= requestAnimationFrame(frame) }
-
-    // Equal card heights on mobile so a taller card never peeks out under a shorter one.
-    const sizeCards = () => {
+    // Everything the loop needs, measured once per layout change. Reading geometry inside the
+    // loop forces a layout every frame, which is what makes phones drop frames.
+    const docTop = (el) => { let y = 0; for (let n = el; n; n = n.offsetParent) y += n.offsetTop; return y }
+    const measure = () => {
       root.style.removeProperty('--stack-h')
       cards.forEach((c) => c.style.removeProperty('--s'))
       if (mobile.matches) root.style.setProperty('--stack-h', Math.max(...cards.map((c) => c.offsetHeight)) + 'px')
-      // where each dot sits along its list, as a fraction (dot is ~12px into the item)
-      timelines.forEach((ol) => {
-        ol.style.setProperty('--tl-h', ol.offsetHeight + 'px')
-        for (const li of ol.querySelectorAll('li')) li.dataset.at = (li.offsetTop + 12 - ol.offsetTop) / ol.offsetHeight
-      })
-      frame()
+      geo = {
+        maxScroll: root.scrollHeight - innerHeight,
+        line: innerHeight * 0.72,
+        sections: sections.map((id) => ({ id, top: docTop(document.getElementById(id)) })),
+        lists: lists.map((l) => {
+          const top = docTop(l.ol)
+          const h = l.ol.offsetHeight
+          l.items.forEach((li) => { li.dataset.at = (docTop(li) + 12 - top) / h })
+          return { ...l, top, h }
+        }),
+        cards: cards.map((c) => ({ el: c, top: docTop(c), h: c.offsetHeight, sticky: parseFloat(getComputedStyle(c).top) || 0 })),
+      }
+      requestFrame()
     }
-    sizeCards()
-    document.fonts.ready.then(sizeCards)
-    addEventListener('scroll', onScroll, { passive: true })
-    addEventListener('resize', sizeCards)
+
+    // Pure arithmetic on cached geometry, then writes. No layout reads, no React state.
+    const frame = () => {
+      if (!geo) return
+      const y = scrollY
+      const atBottom = y >= geo.maxScroll - 2
+      const current = atBottom
+        ? sections.at(-1)
+        : geo.sections.findLast((s) => s.top - y <= 120)?.id ?? sections[0]
+      if (current !== lastActive) { lastActive = current; setActive(current) }
+
+      // Timeline: the mascot and the fill follow the scroll, on the compositor (translate3d).
+      if (!still.matches) for (const l of geo.lists) {
+        const p = Math.min(Math.max((geo.line - (l.top - y)) / l.h, 0), 1)
+        l.fill.style.transform = `scale3d(1, ${p.toFixed(4)}, 1)`
+        l.cursor.style.transform = `translate3d(0, ${(p * l.h).toFixed(1)}px, 0)`
+        for (const li of l.items) if (p >= +li.dataset.at) li.classList.add('lit')
+      }
+
+      // Stacked cards: shrink each card as the next one slides over it.
+      if (mobile.matches && !still.matches) {
+        const tops = geo.cards.map((c) => Math.max(c.top - y, c.sticky))
+        geo.cards.forEach((c, i) => {
+          const covered = i < tops.length - 1 ? (tops[i] + c.h - tops[i + 1]) / c.h : 0
+          c.el.style.setProperty('--s', (1 - 0.06 * Math.min(Math.max(covered, 0), 1)).toFixed(3))
+        })
+      }
+    }
+    const stop = onFrame(frame)
+
+    measure()
+    document.fonts.ready.then(measure)
+    addEventListener('resize', measure)
     return () => {
-      removeEventListener('scroll', onScroll)
-      removeEventListener('resize', sizeCards)
-      cancelAnimationFrame(raf)
+      stop()
+      removeEventListener('resize', measure)
     }
   }, [])
 

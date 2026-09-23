@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import Blob from './Blob.jsx'
-
-const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi)
+import { onFrame } from '../scroll.js'
 
 // Fade sections and tag lists in, once each. Pages call this themselves: a lazy page mounts after
 // Shell's effect has run, so observing from Shell would miss everything on it.
@@ -19,8 +18,7 @@ export function useReveal() {
 }
 
 // Page chrome shared by every route: sky blobs, scroll progress, fade-ins, and the mobile bar.
-// It also drives the mascots: scroll velocity is smoothed into --tilt/--eye-h/--eye-s, so the
-// expression eases in and out instead of snapping between fixed states.
+// It also sets the mascots' mood from scroll direction (see [data-mood] in index.css).
 // `barTrigger` is a selector whose exit shows the bar, or a scroll distance in px.
 export default function Shell({ route, barTrigger, children }) {
   const [showBar, setShowBar] = useState(false)
@@ -30,29 +28,34 @@ export default function Shell({ route, barTrigger, children }) {
     const noTimeline = !CSS.supports('animation-timeline: scroll()')
     const still = matchMedia('(prefers-reduced-motion: reduce)')
 
-    let raf = 0
+    // Expression: any scroll movement of a couple of px flips the mood, held for a moment after
+    // scrolling stops. Written as a data attribute, not React state, so it costs nothing per frame.
     let lastY = scrollY
-    let vel = 0 // smoothed px/frame; the smoothing is what keeps quick flips from flickering
-    const frame = () => {
-      raf = 0
+    let mood = 'normal'
+    let hold = 0
+    let barOn = false
+    let maxScroll = root.scrollHeight - innerHeight
+    const remeasure = () => { maxScroll = root.scrollHeight - innerHeight }
+    addEventListener('resize', remeasure)
+    const setMood = (m) => { if (m !== mood) { mood = m; root.dataset.mood = m } }
+
+    const stop = onFrame(() => {
       const dy = scrollY - lastY
-      lastY = scrollY
-
-      if (noTimeline) root.style.setProperty('--progress', scrollY / (root.scrollHeight - innerHeight || 1))
-      if (typeof barTrigger === 'number') setShowBar(scrollY > barTrigger)
-
-      if (!still.matches) {
-        vel += (dy - vel) * 0.18
-        root.style.setProperty('--tilt', clamp(vel * 0.45, -10, 10).toFixed(2))
-        root.style.setProperty('--eye-h', clamp((vel - 3) / 12, 0, 1).toFixed(3))
-        root.style.setProperty('--eye-s', clamp((-vel - 3) / 12, 0, 1).toFixed(3))
-        // keep ticking while it settles, so the face eases back after scrolling stops
-        if (Math.abs(vel) > 0.05) raf = requestAnimationFrame(frame)
+      if (noTimeline) root.style.setProperty('--progress', scrollY / (maxScroll || 1))
+      if (typeof barTrigger === 'number') {
+        const on = scrollY > barTrigger
+        if (on !== barOn) { barOn = on; setShowBar(on) } // only touch React when it changes
       }
-    }
-    const onScroll = () => { raf ||= requestAnimationFrame(frame) }
-    frame()
-    addEventListener('scroll', onScroll, { passive: true })
+      // small moves accumulate until they cross the threshold, so slow scrolling still triggers
+      if (Math.abs(dy) >= 2) {
+        lastY = scrollY
+        if (!still.matches) {
+          setMood(dy > 0 ? 'happy' : 'surprised')
+          clearTimeout(hold)
+          hold = setTimeout(() => setMood('normal'), 700)
+        }
+      }
+    })
 
     let barIO
     if (typeof barTrigger === 'string') {
@@ -63,8 +66,9 @@ export default function Shell({ route, barTrigger, children }) {
       }
     }
     return () => {
-      removeEventListener('scroll', onScroll)
-      cancelAnimationFrame(raf)
+      stop()
+      clearTimeout(hold)
+      removeEventListener('resize', remeasure)
       barIO?.disconnect()
     }
   }, [route, barTrigger])

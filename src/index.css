@@ -42,7 +42,15 @@ body {
 .sky span:nth-child(3) { bottom: -30vmax; left: 20vw; opacity: 0.3; animation-duration: 70s; }
 
 @keyframes drift {
-  to { transform: translate(6vmax, 4vmax) scale(1.1); }
+  to { transform: translate3d(6vmax, 4vmax, 0) scale(1.1); }
+}
+
+/* Phones: three large animated gradient layers are a lot of fill rate for a decorative
+   background, and the card's big shadow repaints while it flips. Simplify both. */
+@media (max-width: 1023px) {
+  .sky span { animation: none; }
+  .sky span:nth-child(2), .sky span:nth-child(3) { display: none; }
+  .pc-face { box-shadow: 0 6px 16px rgb(2 132 199 / 0.18) !important; }
 }
 
 /* --- Fade-in on scroll (App adds .in via IntersectionObserver) --- */
@@ -81,13 +89,11 @@ body {
   height: 100%;
   background: var(--color-sky-500);
   transform-origin: 50% 0;
-  transform: scaleY(var(--p, 0));
+  transform: scale3d(1, 0, 1);
   will-change: transform;
 }
-.tl-fill, .tl-cursor {
-  /* short eased follow so the dot glides with the scroll instead of stepping */
-  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
-}
+/* .tl-fill / .tl-cursor are scroll-linked: Home writes their transform every frame, and a
+   transition here would make them lag the page. */
 .tl-cursor {
   position: absolute;
   left: -11px;
@@ -95,8 +101,9 @@ body {
   line-height: 0;
   border-radius: 50%;
   background: #fff; /* hides the track line behind the mascot */
-  transform: translateY(calc(var(--p, 0) * var(--tl-h, 0px)));
+  transform: translate3d(0, 0, 0);
   will-change: transform;
+  isolation: isolate;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -120,10 +127,11 @@ body {
   right: 0;
   z-index: 40; /* the progress bar (z 50) draws over its top edge */
   padding: env(safe-area-inset-top) max(1.5rem, env(safe-area-inset-right)) 0 max(1.5rem, env(safe-area-inset-left));
-  background: rgb(255 255 255 / 0.85);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px); /* standard last: the minifier keeps only the last of the pair */
+  /* No backdrop blur: this bar is mobile-only and blurring a fixed layer over a scrolling page
+     is one of the most expensive things a phone can be asked to do. Near-opaque instead. */
+  background: rgb(255 255 255 / 0.96);
   border-bottom: 1px solid var(--color-sky-100);
+  contain: layout paint;
   opacity: 0;
   transform: translateY(-100%);
   transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.25s ease;
@@ -215,13 +223,17 @@ body {
 
 .blob-calm .blob-body, .blob-calm .blob-eyes { animation: none !important; transform: none !important; }
 
-/* Expressions: Shell smooths scroll velocity into --tilt/--eye-h/--eye-s, so the tilt is
-   continuous and the eye shapes crossfade instead of snapping. Only .blob-react reacts. */
+/* Expressions: Shell sets [data-mood] on <html> from scroll direction. Only .blob-react reacts,
+   and only the expression transitions — never anything scroll-linked. */
 .eyes-happy, .eyes-surprised { opacity: 0; }
-.blob-react { transform: rotate(calc(var(--tilt, 0) * 1deg)); }
-.blob-react .eyes-happy { opacity: var(--eye-h, 0); }
-.blob-react .eyes-surprised { opacity: var(--eye-s, 0); }
-.blob-react .eyes-normal { opacity: calc(1 - max(var(--eye-h, 0), var(--eye-s, 0))); }
+.blob-react { transition: transform 0.25s ease; }
+.eyes-normal, .eyes-happy, .eyes-surprised { transition: opacity 0.25s ease; }
+[data-mood="happy"] .blob-react { transform: translate3d(0, 1px, 0) rotate(10deg); }
+[data-mood="surprised"] .blob-react { transform: translate3d(0, -1.5px, 0) rotate(-10deg); }
+[data-mood="happy"] .blob-react .eyes-normal,
+[data-mood="surprised"] .blob-react .eyes-normal { opacity: 0; }
+[data-mood="happy"] .blob-react .eyes-happy { opacity: 1; }
+[data-mood="surprised"] .blob-react .eyes-surprised { opacity: 1; }
 
 @media (prefers-reduced-motion: no-preference) {
   .blob-body { animation: blob-bob 8s ease-in-out infinite; }
@@ -278,9 +290,9 @@ body {
   .minibar, .minibar-avatar { transition: none; }
   .tl-fill { transform: none; } /* full line, everything visible */
   .tl-cursor { display: none; }
-  .blob-react { transform: none; }
-  .blob-react .eyes-happy, .blob-react .eyes-surprised { opacity: 0; }
-  .blob-react .eyes-normal { opacity: 1; }
+  .blob-react, [data-mood] .blob-react { transform: none; transition: none; }
+  [data-mood] .blob-react .eyes-happy, [data-mood] .blob-react .eyes-surprised { opacity: 0; }
+  [data-mood] .blob-react .eyes-normal { opacity: 1; }
   /* front only, no flip */
   .pc-inner, .pc-tap, .pc-wobble { animation: none; transform: none !important; transition: none; }
   .pc-back { display: none; }
