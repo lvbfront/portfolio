@@ -26,9 +26,16 @@ From `package.json` (exact ranges there; versions below are the declared ranges)
 - **@emailjs/browser** ^4.4.1 — contact form
 - **react-icons** ^5.7.0 — only `fa6` icons (GitHub, LinkedIn, envelope)
 - **@vercel/analytics** ^2.0.1 — Web Analytics
+- **gsap** ^3.15.0 (+ its ScrollTrigger plugin) — the `/cdg` scroll story only, so far
 - **oxlint** ^1.81.0 — linter (`.oxlintrc.json`)
 
-No animation library. No router library. No CSS-in-JS.
+No router library. No CSS-in-JS.
+
+**Animation rule:** GSAP + ScrollTrigger are allowed anywhere on the site. Do not migrate existing
+effects that already work (mascot, timeline line fill, reveals, card flip) without a reason. All
+other performance rules (§7) still apply. Today GSAP is imported and registered **only inside the
+lazy `Cdg.jsx` chunk**, so the homepage bundle does not carry it — keep it that way unless Home
+actually needs it.
 
 ## 3. How to run
 
@@ -43,6 +50,7 @@ npm run lint         # oxlint
 - Tests: none. Verification in this project has been done by driving a real browser
   (puppeteer-core against the installed Chrome) plus Lighthouse against `npm run preview`.
 - Lighthouse runs used `http://localhost:4173/` and `http://localhost:4173/#/cdg`.
+- Screenshots of a specific story chapter: `http://localhost:4173/#/cdg?ch=N` (see §5).
 
 ## 4. Architecture and folder map
 
@@ -61,7 +69,7 @@ src/
     Contact.jsx         EmailJS contact form
   pages/
     Home.jsx            all homepage content arrays + homepage scroll logic
-    Cdg.jsx             ClinicalDenoiseGuard write-up + the static demo
+    Cdg.jsx             ClinicalDenoiseGuard write-up + the scroll story (GSAP)
 public/
   favicon.svg           simplified mascot icon
   favicon-32.png        PNG fallback
@@ -76,14 +84,15 @@ photo-source/           original uncropped photos — gitignored, never publishe
 
 - `#/cdg` → the project page; anything else → home. Only `#/…` counts as a route, so in-page
   anchors (`#about`, `#projects`) keep working.
-- The project page is `lazy()` + `<Suspense>`, so it is a separate chunk (~4.7 kB gzipped) and the
-  homepage bundle does not carry it.
+- The project page is `lazy()` + `<Suspense>`, so it is a separate chunk (~49.6 kB gzipped, ~45 kB
+  of which is GSAP + ScrollTrigger) and the homepage bundle does not carry it.
 - Route change scrolls to top and swaps `document.title`.
 - Hash routing was chosen so any static host works with no rewrite rules.
 
 **Where content lives** — all in `src/pages/Home.jsx`, top of file:
 `socials`, `experience`, `education`, `certifications`, `projects`, `skills`, `sections`.
-The CDG page's own content (`tags`, `findings`, demo `tabs`) is at the top of `src/pages/Cdg.jsx`.
+The CDG page's own content (`tags`, `findings`, story data `REQUEST`/`SCAFFOLD`/`OUTPUT`/`STEERED`/
+`chapters`) is at the top of `src/pages/Cdg.jsx`.
 
 ## 5. How each system works
 
@@ -171,18 +180,50 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
 
 ### `/cdg` page — `src/pages/Cdg.jsx`
 - Sections: hero, The problem (links the DIJA paper, arXiv 2507.11097), What we found (3 cards),
-  the demo, gallery, then "Best Poster, SUDS 2026 · Paper in preparation".
-- **The demo is entirely static** — fixed numbers, no model, no API. Its labelling says so, and it
-  must keep saying so.
-- Three tabs share one identical request; only the wrapper changes (none / DIJA scaffold / held-out
-  format). Mask chips render as `mask` pills with `aria-label="masked token"`.
-- A 6-frame denoising stepper (5/10/20/35/50/100%) reveals output tokens progressively while the
-  probe score is already high at 5% — that is the point the page makes.
-- Three-way intervention control: none / steering (partial fix, one step stays redacted) /
-  detection-gated (output withheld).
+  "Try the idea" (the scroll story), gallery, then "Best Poster, SUDS 2026 · Paper in preparation".
+- **The story is entirely static** — fixed numbers, no model, no API. Its disclaimer ("Illustrative
+  example with fixed numbers…") sits above the stage and must keep saying so.
 - Filled blanks are **redacted placeholders in brackets** — never write real unsafe instructions.
 - Poster opens full size in a native `<dialog>` (`.lightbox`).
-- Autoplay is suppressed under `prefers-reduced-motion` (manual stepping only).
+
+### `/cdg` scroll story ("Beneath the Output") — `Story` / `Stage` / `story()` in `Cdg.jsx`
+- One example (the DIJA template attack), told by scrolling alone — no controls.
+- **Structure:** `[data-story]` is a `600svh` wrapper; inside it a **CSS `position: sticky`** stage
+  (`top: var(--bar-h)`, `height: calc(100svh - var(--bar-h))` below `lg` so it clears the mini bar;
+  `top: 0; height: 100svh` at `lg`). Not a ScrollTrigger `pin` — CSS sticky is steadier on iOS.
+- **One ScrollTrigger** on the wrapper (`start "top top"`, `end "bottom bottom"`, `scrub: 0.6`)
+  drives one timeline built by `story(root)`. Labels `ch1`…`ch6` mark each chapter's settled state;
+  each label is followed by a flat **hold** (longest at ch3). Desktop (`lg`) also snaps
+  (`labelsDirectional`); phones don't snap and rely on the holds.
+- `ScrollTrigger.config({ ignoreMobileResize: true })`; `ScrollTrigger.refresh()` after
+  `document.fonts.ready`. Nothing above the stage lazy-loads, so no image-load refresh is needed.
+- The "Try the idea" **section has no `.reveal`** (its `translateY` would skew ScrollTrigger's
+  measurements); only its heading block does.
+- **Chapters:** 1 request only · 2 scaffold slides in · 3 gauge to 5%, outputs all masked, probe
+  bar to 99% + "Injection detected" · 4 gauge 5→100%, tokens reveal one by one (bracketed = rose) ·
+  5 "Steering applied", steps 1 and 3 crossfade to safe text, step 2 stays rose · 6 rose shutter
+  (`scaleY` from the top) "Flagged by probe: response held for review.", caption = the takeaway.
+- **Stage layout:** meta strip (`SAMPLE 01 · LLaDA-8B · DIJA`, chapter counter), depth gauge
+  (ticks 0/5/10/20/35/50/100 evenly spaced, 5 emphasised; the marker is an `inset: 0` layer moved by
+  `yPercent`, so no measuring), prompt + amber scaffold (a block `<mark>` with flex-wrap, so it
+  never fragments), probe meter (`scaleX`), output, caption. Fits 360×740 with nothing below the
+  fold.
+- **Rendering rules:** every state is in the DOM from the start — each output word sits in place at
+  opacity 0 with its mask chip absolutely on top; steering is two layers in one grid cell
+  (`grid-area: 1/1`); captions, counter, pill and score are stacked the same way. The timeline only
+  touches `transform`/`opacity`. No React state during scroll, no text swapping, nothing shifts.
+- **Cleanup/variants:** everything is created inside `gsap.matchMedia()` scoped to the component
+  and reverted on unmount. Its conditions are `desktop`, `motion` and `reduce` — **one of
+  motion/reduce must always match**, because gsap.matchMedia skips the callback when no condition
+  matches (that bug left phones with no animation at all).
+- **Reduced motion:** the sticky wrapper is `motion-reduce:hidden` and a storyboard of six cards
+  (`[data-card]`) shows instead; each card runs `story(card)` paused at its label, so it shows that
+  chapter's final state. No sticky, no scrub.
+- **Accessibility:** the stage and storyboard are `aria-hidden`; an `sr-only` `<ol>` describes the
+  six chapters in plain text. No `aria-live`.
+- **QA helper:** `#/cdg?ch=N` (N = 1–6) scrolls to chapter N and freezes it there (disables the
+  trigger and pauses the timeline at `chN`) — for screenshots. Inert without the query; the router
+  ignores it (`startsWith('#/cdg')`).
 
 ### Contact form — `src/components/Contact.jsx`
 - `@emailjs/browser`; service id, template id and public key are inline in that file. The public key
@@ -215,14 +256,16 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
 
 ## 7. Performance rules (and why)
 
-Targets: Lighthouse ≥95 on both routes. Current: home 100/100/100/100; `/cdg` 97–100 mobile,
-100 desktop. Home JS ≈81.6 kB gzipped, CDG chunk ≈4.7 kB.
+Targets: Lighthouse ≥95 on both routes. Current (local preview): home 100/100/96/100; `/cdg`
+mobile 96/100/96/100, desktop 100/100/96/100. Home JS ≈81.6 kB gzipped, CDG chunk ≈49.6 kB
+(was 4.7 kB before GSAP; its mobile LCP rose ~250ms, 2.4s → 2.65s).
 
 Rules learned the hard way — breaking these caused real regressions:
 
 1. **No CSS transition on a scroll-linked transform.** A 150ms transition on `.tl-cursor` made the
    mascot permanently chase the page. Transitions are for the expression only.
-2. **One rAF loop.** Two loops (Shell + Home) wrote in different frames.
+2. **One rAF loop.** Two loops (Shell + Home) wrote in different frames. (GSAP's ticker is a
+   second loop, but only on `/cdg`, and it drives only the story stage.)
 3. **No React state per frame.** `setActive`/`setShowBar` only fire when the value changes.
 4. **No layout reads inside the loop.** Section tops, list geometry and card offsets are cached in
    `measure()` and recomputed on resize / after fonts load. The loop is arithmetic plus writes.
@@ -288,7 +331,10 @@ travelling mascot. (Remaining suspects if it is ever revisited: the five sticky 
 - **Prose on `/cdg` was written by Claude from the owner's brief** and describes real research —
   it should be re-read by the owner whenever it changes.
 - iPhone scroll smoothness is not fully verified from this machine; all numbers are Chrome +
-  CPU throttling.
+  CPU throttling. This includes the `/cdg` scroll story and iOS address-bar show/hide behaviour.
+- **`/cdg` has a ~0.04 CLS from the web-font swap** (the hero paragraph gains a line when Plus
+  Jakarta Sans lands). Present on `main` before the scroll story too; Lighthouse only reports it
+  when the lazy chunk renders before the font arrives.
 
 ## 11. Open items / improvement list
 
