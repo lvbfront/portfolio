@@ -7,6 +7,14 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="preload" as="image" href="/me.webp" imagesrcset="/me-200.webp 200w, /me.webp 400w" imagesizes="(min-width: 1024px) 160px, 70vw" type="image/webp" fetchpriority="high" />
+    <!-- /cdg only: its hero poster is the LCP image but lives in a lazy chunk, so start it now.
+         Must match the <img> srcset/sizes in Cdg.jsx. -->
+    <script>
+      if (location.hash.startsWith('#/cdg')) {
+        const l = Object.assign(document.createElement('link'), { rel: 'preload', as: 'image', fetchPriority: 'high', imageSrcset: '/cdg/poster-500.webp 500w, /cdg/poster-700.webp 700w, /cdg/poster.webp 1400w', imageSizes: '(min-width: 1024px) 24rem, 68vw' })
+        document.head.append(l)
+      }
+    </script>
     <title>Abdullah Bukhari — AI Engineer</title>
     <meta name="description" content="Abdullah Bukhari — AI engineer working on LLMs, computer vision and AI agents." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

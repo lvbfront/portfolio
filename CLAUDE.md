@@ -26,16 +26,18 @@ From `package.json` (exact ranges there; versions below are the declared ranges)
 - **@emailjs/browser** ^4.4.1 — contact form
 - **react-icons** ^5.7.0 — only `fa6` icons (GitHub, LinkedIn, envelope)
 - **@vercel/analytics** ^2.0.1 — Web Analytics
-- **gsap** ^3.15.0 (+ its ScrollTrigger plugin) — the `/cdg` scroll story only, so far
+- **gsap** ^3.15.0 (+ its ScrollTrigger plugin) — `/cdg` only, so far
 - **oxlint** ^1.81.0 — linter (`.oxlintrc.json`)
 
 No router library. No CSS-in-JS.
 
 **Animation rule:** GSAP + ScrollTrigger are allowed anywhere on the site. Do not migrate existing
 effects that already work (mascot, timeline line fill, reveals, card flip) without a reason. All
-other performance rules (§7) still apply. Today GSAP is imported and registered **only inside the
-lazy `Cdg.jsx` chunk**, so the homepage bundle does not carry it — keep it that way unless Home
-actually needs it.
+other performance rules (§7) still apply. Today GSAP is imported **only from the lazy `Cdg.jsx`
+chunk**, so the homepage bundle does not carry it — keep it that way unless Home actually needs it.
+In `Cdg.jsx` it is a **dynamic import that starts after the window `load` event** (`motion`
+promise; effects set up GSAP in `motion.then`). This keeps its ~45 kB off the critical path of the
+`/cdg` LCP image: static import cost mobile Lighthouse 97 → 94.
 
 ## 3. How to run
 
@@ -55,7 +57,8 @@ npm run lint         # oxlint
 ## 4. Architecture and folder map
 
 ```
-index.html              icons, title, meta description, font <link>, preload of /me.webp
+index.html              icons, title, meta description, font <link>, preload of /me.webp,
+                        and an inline script that preloads the /cdg poster on #/cdg only
 src/
   main.jsx              startFavicon() + React root + <Analytics />
   App.jsx               hash router; lazy-loads the /cdg page; sets document.title per route
@@ -69,13 +72,13 @@ src/
     Contact.jsx         EmailJS contact form
   pages/
     Home.jsx            all homepage content arrays + homepage scroll logic
-    Cdg.jsx             ClinicalDenoiseGuard write-up + the scroll story (GSAP)
+    Cdg.jsx             ClinicalDenoiseGuard page: hero, evidence, problem, scroll story, findings
 public/
   favicon.svg           simplified mascot icon
   favicon-32.png        PNG fallback
   apple-touch-icon.png  180px
   me.webp me-200.webp   hero photo (400px / 200px)
-  cdg/                  poster.webp, team-toronto.webp, team-kaust.webp
+  cdg/                  poster.webp (1400w) + poster-700/-500.webp, team-toronto.webp, team-kaust.webp
   robots.txt
 photo-source/           original uncropped photos — gitignored, never published
 ```
@@ -84,15 +87,16 @@ photo-source/           original uncropped photos — gitignored, never publishe
 
 - `#/cdg` → the project page; anything else → home. Only `#/…` counts as a route, so in-page
   anchors (`#about`, `#projects`) keep working.
-- The project page is `lazy()` + `<Suspense>`, so it is a separate chunk (~49.6 kB gzipped, ~45 kB
-  of which is GSAP + ScrollTrigger) and the homepage bundle does not carry it.
+- The project page is `lazy()` + `<Suspense>`, so it is a separate chunk (~7.6 kB gzipped) and the
+  homepage bundle does not carry it. GSAP (27.4 kB) and ScrollTrigger (17.5 kB) are two further
+  chunks that the page loads after `load`.
 - Route change scrolls to top and swaps `document.title`.
 - Hash routing was chosen so any static host works with no rewrite rules.
 
 **Where content lives** — all in `src/pages/Home.jsx`, top of file:
 `socials`, `experience`, `education`, `certifications`, `projects`, `skills`, `sections`.
-The CDG page's own content (`tags`, `findings`, story data `REQUEST`/`SCAFFOLD`/`OUTPUT`/`STEERED`/
-`chapters`) is at the top of `src/pages/Cdg.jsx`.
+The CDG page's own content (`tags`, `findings` with their `figure`s, `plates`, story data
+`REQUEST`/`SCAFFOLD`/`OUTPUT`/`STEERED`/`chapters`) is at the top of `src/pages/Cdg.jsx`.
 
 ## 5. How each system works
 
@@ -179,12 +183,51 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
   from `Shell` missed the whole CDG page (it rendered at opacity 0). Do not move it back.
 
 ### `/cdg` page — `src/pages/Cdg.jsx`
-- Sections: hero, The problem (links the DIJA paper, arXiv 2507.11097), What we found (3 cards),
-  "Try the idea" (the scroll story), gallery, then "Best Poster, SUDS 2026 · Paper in preparation".
+The whole page reads as a **descent beneath the surface**: `±0.00 — SURFACE` hairline, then
+numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 — BACK TO SURFACE`.
+
+- **Hero ("Surface")** — meta strip (`RESEARCH · N°01` / `HIVE Lab · University of Toronto ·
+  SUDS 2026`, the last part links the SUDS page), a three-line title (`Clinical / Denoise / Guard`,
+  the h1 has the unsplit name as `sr-only`), the pitch as a lede with *hijacked?* in italic, tags,
+  the "Best Poster, SUDS 2026" badge, and the poster as `PLATE 01 · POSTER` (rotated −2°, parallax
+  drift). Mobile: title first, poster peeking below. `lg`: two columns.
+- **Title reveal** is the CSS `.rise` keyframe in `index.css` (transform only, opacity stays 1,
+  off under reduced motion) — **not GSAP**, because GSAP arrives after `load` and would flash.
+- **`01 — Evidence`** ("Presented, *not just written.*") — the gallery plates with a spec-sheet
+  `<dl>` under each (caption first, then Plate/Type/Place/Event).
+  - Phones: a **native CSS scroll-snap strip** (`snap-x snap-mandatory`, 78% wide items, so the
+    next plate peeks). The `02 / 03` counter is written by an IntersectionObserver (root = the
+    strip, threshold 0.6) straight to the DOM — no JS scrolling, no React state.
+  - `lg`: two plates side by side, the second offset lower (`lg:mt-32`), each drifting with scroll.
+  - **One data array, `plates`:** `plates[0]` is the hero poster, the rest are the gallery. Plate
+    numbers and the counter derive from it, so a new photo is one new entry. Each photo appears
+    once on the page. Future option: with ≥4 gallery plates, desktop could switch to a GSAP
+    horizontal scroll (CSS-sticky pin, like the story). Not built.
+- **`02 — The problem`** — first sentence as a pull line, the rest as body, and a margin note
+  (`Note · DIJA`, Wen et al., 2025, arXiv link). The note is a citation only; no new wording.
+- **`03 — Beneath the output`** — the scroll story (next section), unchanged apart from its label.
+- **`04 — What we found`** — three numbered stages, each topped by a figure quoted from its own
+  body (`5%`, `~30%` for "roughly 30%", `~97%`), then the card title and body verbatim. Figures count
+  up once on entry (GSAP `textContent` + `snap`, landing on the markup value) and are `aria-hidden`.
+  Mobile: stacked on a thin line; `lg`: three columns. Then the takeaway as a large statement with
+  *detection-gated containment* in italic.
+- **Footer** — `±0.00 — BACK TO SURFACE`, "Paper in preparation", "← Back to home" (also at top).
+- **Lightbox:** every plate is a `<button>` that opens the native `<dialog>` (`.lightbox`) with that
+  photo. The dialog `<img>` has **no `src` until opened** — an eager full-size poster download there
+  competed with the LCP image.
+- **Hero poster = LCP.** Not lazy, `fetchpriority="high"`, `srcset` 500/700/1400w with
+  `sizes="(min-width: 1024px) 24rem, 68vw"`, and preloaded from `index.html` on `#/cdg` loads —
+  **keep that preload's srcset/sizes identical to the `<img>`**.
+- **Animations** other than the story live in **one `gsap.matchMedia()`** in `Cdg()` (drift,
+  count-up), reverted on unmount; reduced motion gets none of them. After fonts and images load,
+  it calls `ScrollTrigger.refresh()`. Images reserve space with width/height + `aspect-ratio`.
+- **Attribute names are shared:** story and page effects both query by `data-*` inside the page.
+  `data-count` belongs to the story's chapter counter; the findings use `data-countup`. A clash
+  here once turned "03 / 06" into "3 / 06".
 - **The story is entirely static** — fixed numbers, no model, no API. Its disclaimer ("Illustrative
   example with fixed numbers…") sits above the stage and must keep saying so.
 - Filled blanks are **redacted placeholders in brackets** — never write real unsafe instructions.
-- Poster opens full size in a native `<dialog>` (`.lightbox`).
+- Research sentences on this page must stay **word for word**; layout may split and restyle them.
 
 ### `/cdg` scroll story ("Beneath the Output") — `Story` / `Stage` / `story()` in `Cdg.jsx`
 - One example (the DIJA template attack), told by scrolling alone — no controls.
@@ -196,7 +239,8 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
   each label is followed by a flat **hold** (longest at ch3). Desktop (`lg`) also snaps
   (`labelsDirectional`); phones don't snap and rely on the holds.
 - `ScrollTrigger.config({ ignoreMobileResize: true })`; `ScrollTrigger.refresh()` after
-  `document.fonts.ready`. Nothing above the stage lazy-loads, so no image-load refresh is needed.
+  `document.fonts.ready` (and again from the page effect after images load; images above the stage
+  have reserved sizes, so chapter positions don't move).
 - The "Try the idea" **section has no `.reveal`** (its `translateY` would skew ScrollTrigger's
   measurements); only its heading block does.
 - **Chapters:** 1 request only · 2 scaffold slides in · 3 gauge to 5%, outputs all masked, probe
@@ -240,6 +284,10 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
 
 ## 6. Design language
 
+- **Section labels (`/cdg`):** one system — `Label` in `Cdg.jsx`: monospace 11px, uppercase,
+  `sky-700`, `NN — NAME`, a hairline, and a decorative depth `−NN.00` (`aria-hidden`). It renders
+  the section's `h2` unless the section has its own heading (Evidence). Headings are bold with one
+  italic accent phrase. `Hairline` draws the `±0.00` surface lines.
 - **Palette:** white → `sky-50` page background, `slate-800` headings, `slate-600` body,
   `sky-700` accents, `sky-100` borders.
 - **Contrast rule:** `sky-500`/`sky-600` text fails AA on white. Links, tags, pills and buttons use
@@ -257,8 +305,8 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
 ## 7. Performance rules (and why)
 
 Targets: Lighthouse ≥95 on both routes. Current (local preview): home 100/100/96/100; `/cdg`
-mobile 96/100/96/100, desktop 100/100/96/100. Home JS ≈81.6 kB gzipped, CDG chunk ≈49.6 kB
-(was 4.7 kB before GSAP; its mobile LCP rose ~250ms, 2.4s → 2.65s).
+mobile 97–98/100/96/100 (LCP ≈2.3–2.4s, the hero poster), desktop 100/100/96/100. Home JS
+≈81.6 kB gzipped; CDG chunk ≈7.6 kB + GSAP 27.4 kB + ScrollTrigger 17.5 kB (both after `load`).
 
 Rules learned the hard way — breaking these caused real regressions:
 
@@ -332,9 +380,11 @@ travelling mascot. (Remaining suspects if it is ever revisited: the five sticky 
   it should be re-read by the owner whenever it changes.
 - iPhone scroll smoothness is not fully verified from this machine; all numbers are Chrome +
   CPU throttling. This includes the `/cdg` scroll story and iOS address-bar show/hide behaviour.
-- **`/cdg` has a ~0.04 CLS from the web-font swap** (the hero paragraph gains a line when Plus
-  Jakarta Sans lands). Present on `main` before the scroll story too; Lighthouse only reports it
-  when the lazy chunk renders before the font arrives.
+- **`/cdg` has a 0.03–0.06 CLS from the web-font swap**: when Plus Jakarta Sans lands, the glyphs
+  of the huge title and the lede move within their boxes (box heights don't change, and it happens
+  with animation off too). It was ~0.04 on `main` before the redesign. Still "good" (<0.1). Fix if
+  wanted: a metric-matched fallback `@font-face` (`size-adjust` / `ascent-override` over Arial)
+  in `--font-sans`, a site-wide change.
 
 ## 11. Open items / improvement list
 

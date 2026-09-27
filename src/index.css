@@ -326,3 +326,10 @@ body {
   background: rgb(2 22 40 / 0.75);
   backdrop-filter: blur(2px);
 }
+
+/* --- /cdg title: each line rises inside its overflow-hidden mask on load. Transform only, opacity
+   stays 1. CSS rather than GSAP so it never waits for the lazily loaded GSAP (no flash). --- */
+@media (prefers-reduced-motion: no-preference) {
+  .rise { animation: rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) calc(100ms + var(--i, 0) * 90ms) both; }
+}
+@keyframes rise { from { transform: translateY(110%); } }
