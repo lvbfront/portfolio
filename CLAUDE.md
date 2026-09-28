@@ -275,41 +275,66 @@ numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 �
   trigger and pauses the timeline at `chN`) — for screenshots. Inert without the query; the router
   ignores it (`startsWith('#/cdg')`).
 
-### Events & Competitions ("The Route") — `Events` / `Stop` / `Photo` in `src/pages/Home.jsx`
+### Events & Competitions ("The Route") — `Events` / `Leg` / `Stop` / `Photo` in `src/pages/Home.jsx`
 - Between Projects and Skills; `events` is in `sections`, so the desktop nav and scroll-spy include
-  it. Heading: mono `On the road` label + `h2` "Events & Competitions" (only the heading has
-  `.reveal` — a transform on the wrapper would skew ScrollTrigger's measurements).
+  it. There is no heading above the stage: the **first spread of the track is the heading** (mono
+  `On the road`, big `h2` "Events & Competitions", a `scroll →` / `swipe →` hint). The section has
+  no `.reveal` (a transform would skew ScrollTrigger); `scroll-mt` lands anchor jumps on the stuck
+  stage.
+- **Open layout, no cards:** each event is a spread floating on the page background (no white,
+  border or shadow). Phones: `88cqw`, photo above text. `lg`: `62cqw` (SUDS `wide` → `70cqw`), photos
+  and text side by side, title `text-4xl`, description `text-xl`. Gaps `8cqw` / `9cqw`. Each spread
+  is vertically centred (`my-auto`) above its dot. The end stop ("More stops soon") is large, quiet
+  `slate-500` type.
 - **Data — `events` array.** Only `title` is required; every other field renders only if present
   (empty strings count as absent): `date`, `place`, `organizer` (joined as the mono meta line above
-  the image), `label` (mono kicker), `result` (badge), `project`, `line`, `tags`,
-  `link: { label, href }`, `images`, `wide` (panel spans two on `lg`, laid out in two columns),
-  `stop` (overrides the city label under the dot, e.g. `Toronto → KAUST`). `images` holds one or
-  two entries: `{ src, w, h, alt, srcSet? }` or `{ placeholder: true }`; the second one is drawn
-  smaller, offset over the first's corner. Placeholder plates are pure CSS (sky gradient, camera
-  icon, "Photo coming soon"). Visionthon's `line` reads the Recyclable Materials Classifier
-  project's description, so the two stay in sync. A stop with no images is the short end panel.
+  the photos), `label` (mono kicker), `result` (badge), `project`, `line`, `tags`,
+  `link: { label, href }`, `images`, `wide` (a wider spread on `lg`), `stop` (overrides the city
+  label under the dot, e.g. `Toronto → KAUST`). `images` holds one or two entries:
+  `{ src, w, h, alt, srcSet? }` or `{ placeholder: true }`; the second one is drawn smaller, offset
+  over the first's corner. Placeholder plates are pure CSS (sky gradient, camera icon, "Photo coming
+  soon"). Visionthon's `line` reads the Recyclable Materials Classifier project's description, so
+  the two stay in sync. A stop with no images is the end spread.
 - **Structure:** a wrapper (`--dist` + one stage height tall) holding a **CSS `position: sticky`**
   stage (`top: var(--bar-h)`, `height: calc(100svh - var(--bar-h))` below `lg`; `top: 0; 100svh` at
   `lg`) with the horizontal track inside. Same technique as the `/cdg` story; not a ScrollTrigger pin.
-  The stage is full-bleed on phones (`-mx-6`/`md:-mx-12`) and the right column on `lg`; it is a
-  size container, so panels are `82cqw` (SUDS `88cqw`, end `60cqw`) on phones and half the column
-  (two visible) on `lg`, the wide one the full column.
-- **Measurement (no GSAP):** a ResizeObserver on the track sets `--dist` (track − stage width) on the
-  wrapper, and `--r0`/`--rw` (first dot centre, first→last dot span) on the track for the route line.
-  It then dispatches a `resize` event so `Home`/`Shell` re-measure the sections below, and refreshes
-  ScrollTrigger if loaded. Layout is final before GSAP arrives; until then the stage shows panel one.
-- **Motion:** one `gsap.matchMedia()` (reduced-motion query only — breakpoints are handled by CSS
-  and function values) with one timeline on one ScrollTrigger (`start "top top"`, `end "bottom
-  bottom"`, `scrub: 0.5`, `invalidateOnRefresh`): track `x` → `-(track − stage)`, route fill
-  `scaleX` 0→1, blob `x` → route span, all `ease: "none"`. Reverted on unmount (the /cdg round trip
+  The stage is a size container (widths in `cqw`). Phones: full-bleed via `-mx-6`/`md:-mx-12`.
+- **Full-screen chapter (`lg`):** the stage breaks out of the right column with negative margins
+  `--bl`/`--br` (the wrapper's distance to the viewport's left/right edge, measured), so it spans
+  exactly `clientWidth` — no `100vw`, no horizontal page scroll. While the ScrollTrigger is active,
+  its `onToggle` sets **`data-chapter` on `<html>`**; `.sidecol` then fades out (300ms opacity,
+  `pointer-events: none`, `visibility: hidden` after the fade so it can't be focused) and fades back
+  in on release in either direction. A state toggle, not per-frame work, so the transition is fine.
+  The heading and end spreads are exactly the right column's width, the track's padding is
+  `--bl`/`--br`, and the end spread has an extra `--bl` margin — so at the stick and release points
+  content sits only where the right column is, and the previous spread is off-screen. Outside the
+  chapter `.events-stage` is clipped to `inset(0 0 0 var(--bl))`, so the route line never runs
+  under the visible left column. Nothing changes layout, so scroll positions never jump. Phones keep
+  the slim top bar (the attribute is set there too, but the CSS is `lg`-only).
+- **Measurement (no GSAP):** a ResizeObserver on the track sets `--bl`/`--br` and `--dist`
+  (track − stage width) on the wrapper, and `--r0`/`--rw` (first dot centre, first→last dot span) on
+  the track. It then dispatches a `resize` event so `Home`/`Shell` re-measure the sections below, and
+  refreshes ScrollTrigger if loaded. Layout is final before GSAP arrives; until then the stage shows
+  the heading spread.
+- **Motion:** one `gsap.matchMedia()` with `motion`/`reduce` conditions (one always matches). Motion:
+  one timeline on one ScrollTrigger (`start "top top"`, `end "bottom bottom"`, `scrub: 0.5`,
+  `invalidateOnRefresh`, `onToggle` → `data-chapter`): track `x` → `-(track − stage)`, route fill
+  `scaleX` 0→1, blob `x` → route span, all `ease: "none"`. Breakpoints need no branch (CSS + function
+  values). The cleanup removes `data-chapter`; everything is reverted on unmount (the /cdg round trip
   works). `ScrollTrigger.refresh()` after fonts + `load`.
-- **Route:** gray line + sky fill between the first and last dot, a dot and mono city label under
-  each panel, the Blob (22px, calm + reactive, white disc) riding the fill's tip. All `aria-hidden`.
-- **Reduced motion:** wrapper `h-auto`, stage `static` and a native `snap-x` swipe strip; no GSAP
-  timeline, fill hidden, blob parked on the first dot.
-- **Accessibility:** a `<section>` labelled by its `h2`; each panel is an `<article tabIndex=0>`
-  labelled by its `h3`. On focus inside the track, the page scrolls to the scroll position where
-  that panel is in view (motion only — the swipe strip scrolls itself).
+- **Route:** a gray line along the bottom of the stage across the whole track (on `lg` inset by
+  `--bl`/`--br`), a sky fill from the first dot (under the heading) to the blob, a dot and mono city
+  label under each spread, and the Blob (22px, calm + reactive, white disc) riding the fill's tip.
+  The heading and end spreads mirror each other, so the blob stays fixed on screen (centre of the
+  right column on `lg`, centre of the screen on phones) while the road moves under it and each dot
+  passes beneath it. All `aria-hidden`.
+- **Reduced motion:** wrapper `h-auto`, stage `static`, a full-width native `snap-x` swipe strip; no
+  timeline, fill hidden, blob parked on the first dot. On `lg` the left column is hidden while the
+  strip is on screen: a plain ScrollTrigger (`top bottom` → `bottom top`, same `onToggle`) — GSAP is
+  already loaded by then, so no separate IntersectionObserver is needed.
+- **Accessibility:** a `<section>` labelled by its `h2`; each event is an `<article tabIndex=0>`
+  labelled by its `h3`. On focus inside the track, the page scrolls to where that spread is centred
+  in the stage (motion only — the swipe strip scrolls itself).
 - **Photo convention:** originals go in `photo-source/events/` (gitignored). Export each to
   `public/events/<slug>-<n>.webp` at max 1400px wide plus a ~700px variant `<slug>-<n>-700.webp`,
   then replace the stop's `{ placeholder: true }` with
@@ -391,6 +416,9 @@ travelling mascot. (Remaining suspects if it is ever revisited: the five sticky 
   `.DS_Store`, `.env` and `.env.*`, and `photo-source/` (original uncropped photos — they contain
   people and UI chrome that shouldn't be published).
 - **`dist/` is never committed.** Vercel builds from source.
+- **Screenshot branches (`pr-assets/*`) must contain a `vercel.json` with
+  `{"git":{"deploymentEnabled":false}}`.** Without it, Vercel tries to build the branch (it has no
+  app) and emails a failure.
 - **Vercel auto-deploys from `main`.** Web Analytics is enabled in the dashboard; `<Analytics />`
   renders in `src/main.jsx`. In local `preview` it 404s on `/_vercel/insights/script.js` — expected,
   and it drops local best-practices to 96.

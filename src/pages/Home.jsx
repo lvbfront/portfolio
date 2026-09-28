@@ -213,62 +213,79 @@ const Photo = ({ img, className = '' }) => img.placeholder ? (
   </div>
 ) : (
   <img
-    src={img.src} srcSet={img.srcSet} sizes={img.srcSet && '(min-width: 1024px) 20rem, 80vw'} alt={img.alt}
+    src={img.src} srcSet={img.srcSet} sizes={img.srcSet && '(min-width: 1024px) 40vw, 90vw'} alt={img.alt}
     width={img.w} height={img.h} loading="lazy"
     className={`aspect-[4/3] rounded-xl object-cover object-[50%_60%] ${className}`}
   />
 )
 
-// One stop: the panel, then its dot and city on the route line (data-dot is measured by Events).
+// One leg of the route: its content centred in the stage, then its dot and city on the route line
+// (data-dot is measured by Events).
+const Leg = ({ className, place, children }) => (
+  <div className={`flex shrink-0 snap-start flex-col ${className}`}>
+    {children}
+    <div aria-hidden="true" className="h-10 text-center font-mono text-[11px] uppercase tracking-wider text-slate-500">
+      <span data-dot className="relative mx-auto mb-2 block size-2.5 rounded-full bg-sky-500 ring-4 ring-white" />
+      {place}
+    </div>
+  </div>
+)
+
+// One event as an open spread: no card, photos beside the text on lg, above it on phones.
 const Stop = ({ e }) => {
   const id = useId()
   const [main, second] = e.images ?? []
   const meta = [e.date, e.place, e.organizer].filter(Boolean).join(' · ')
+  // the end stop mirrors the heading: it fills the right column, and its extra margin pushes the
+  // previous spread off-screen, so the left column can fade back in over empty space
+  const width = !main ? 'w-[88cqw] lg:ml-(--bl) lg:w-[calc(100cqw-var(--bl)-var(--br))]' : e.wide ? 'w-[88cqw] lg:w-[70cqw]' : 'w-[88cqw] lg:w-[62cqw]'
   return (
-    <div className={`flex shrink-0 snap-start flex-col justify-end ${e.wide ? 'w-[88cqw] lg:w-[100cqw]' : `${main ? 'w-[82cqw]' : 'w-[60cqw]'} lg:w-[calc(50cqw-0.75rem)]`}`}>
+    <Leg className={width} place={e.stop ?? e.place}>
       <article
         tabIndex={0}
         aria-labelledby={id}
-        className={`grid gap-3 rounded-2xl border border-sky-100 bg-white p-4 shadow-md shadow-sky-100 ${e.wide ? 'lg:grid-cols-2 lg:gap-x-6' : ''} ${main ? '' : 'text-center'}`}
+        className={`my-auto grid gap-5 rounded-2xl ${main ? 'lg:grid-cols-[1.2fr_1fr] lg:items-center lg:gap-x-12' : 'text-center'}`}
       >
-        {meta && <p className="col-span-full font-mono text-[11px] uppercase tracking-wider text-slate-500">{meta}</p>}
+        {meta && <p className="col-span-full font-mono text-xs uppercase tracking-wider text-slate-500">{meta}</p>}
         {main && (
-          <div className={`relative ${second ? 'mr-3 mb-6' : ''}`}>
+          <div className={`relative ${second ? 'mr-4 mb-8' : ''}`}>
             <Photo img={main} className="w-full" />
-            {second && <Photo img={second} className="absolute -right-3 -bottom-6 w-2/5 ring-4 ring-white" />}
+            {second && <Photo img={second} className="absolute -right-4 -bottom-8 w-2/5 ring-4 ring-white" />}
           </div>
         )}
         <div>
-          {e.label && <p className="mb-1 font-mono text-[11px] uppercase tracking-wider text-sky-700">{e.label}</p>}
-          <h3 id={id} className="font-semibold text-slate-800">{e.title}</h3>
-          {e.result && <p className="mt-2"><span className="inline-block rounded-full bg-sky-700 px-2.5 py-0.5 text-xs font-semibold text-white">{e.result}</span></p>}
-          {e.project && <p className="mt-2 text-sm font-semibold text-slate-800">{e.project}</p>}
-          {e.line && <p className="mt-1 text-sm leading-relaxed">{e.line}</p>}
-          {e.tags && <ul className="tags mt-3 flex flex-wrap gap-2" aria-label="Technologies">{e.tags.map((t, i) => <Tag key={t} i={i}>{t}</Tag>)}</ul>}
-          {e.link && <a href={e.link.href} className="mt-3 inline-block text-sm font-semibold text-sky-700 hover:underline">{e.link.label}</a>}
+          {e.label && <p className="mb-2 font-mono text-xs uppercase tracking-wider text-sky-700">{e.label}</p>}
+          <h3 id={id} className={main ? 'text-2xl font-bold text-slate-800 lg:text-4xl' : 'text-3xl font-medium text-slate-500 lg:text-5xl'}>{e.title}</h3>
+          {e.result && <p className="mt-3"><span className="inline-block rounded-full bg-sky-700 px-3 py-1 text-sm font-semibold text-white">{e.result}</span></p>}
+          {e.project && <p className="mt-3 font-semibold text-slate-800 lg:text-lg">{e.project}</p>}
+          {e.line && <p className="mt-1 leading-relaxed lg:text-xl">{e.line}</p>}
+          {e.tags && <ul className="tags mt-4 flex flex-wrap gap-2" aria-label="Technologies">{e.tags.map((t, i) => <Tag key={t} i={i}>{t}</Tag>)}</ul>}
+          {e.link && <a href={e.link.href} className="mt-4 inline-block font-semibold text-sky-700 hover:underline lg:text-lg">{e.link.label}</a>}
         </div>
       </article>
-      <div aria-hidden="true" className="mt-4 h-10 text-center font-mono text-[11px] uppercase tracking-wider text-slate-500">
-        <span data-dot className="relative mx-auto mb-2 block size-2.5 rounded-full bg-sky-500 ring-4 ring-white" />
-        {e.stop ?? e.place}
-      </div>
-    </div>
+    </Leg>
   )
 }
 
 // "The Route": a CSS-sticky stage whose track moves right to left as the page scrolls through a
 // wrapper as tall as the travel plus one viewport. The wrapper height is measured here (no GSAP
 // needed), so layout is final before GSAP arrives; one scrubbed timeline then drives the track,
-// the route fill and the mascot. Reduced motion: a native swipe strip, blob parked at stop one.
+// the route fill and the mascot. On lg the stage breaks out to the full viewport width and the
+// left column fades out while it is stuck (data-chapter on <html>, see .sidecol in index.css).
+// Reduced motion: a native swipe strip, blob parked at the first dot.
 function Events() {
   const wrap = useRef(null)
   const stage = useRef(null)
   const track = useRef(null)
 
   useEffect(() => {
+    const root = document.documentElement
     const w = wrap.current, s = stage.current, t = track.current
     let ST, mm, started = false, dead = false
     const ro = new ResizeObserver(() => {
+      const r = w.getBoundingClientRect()
+      w.style.setProperty('--bl', r.left + 'px') // lg: the stage bleeds out by these, to the viewport edges
+      w.style.setProperty('--br', root.clientWidth - r.right + 'px')
       const dots = t.querySelectorAll('[data-dot]')
       const x = (d) => d.offsetLeft + d.offsetWidth / 2
       t.style.setProperty('--r0', x(dots[0]) + 'px')
@@ -287,11 +304,16 @@ function Events() {
         if (dead) return
         ST = ScrollTrigger
         mm = gsap.matchMedia(w)
-        mm.add('(prefers-reduced-motion: no-preference)', () => {
-          gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: w, start: 'top top', end: 'bottom bottom', scrub: 0.5, invalidateOnRefresh: true } })
+        // one of motion/reduce always matches — gsap.matchMedia skips the callback when none does
+        mm.add({ motion: '(prefers-reduced-motion: no-preference)', reduce: '(prefers-reduced-motion: reduce)' }, ({ conditions: { reduce } }) => {
+          const onToggle = (st) => root.toggleAttribute('data-chapter', st.isActive)
+          // reduced motion: the strip is full width too, so the left column hides while it's on screen
+          if (reduce) ScrollTrigger.create({ trigger: w, start: 'top bottom', end: 'bottom top', onToggle })
+          else gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: w, start: 'top top', end: 'bottom bottom', scrub: 0.5, invalidateOnRefresh: true, onToggle } })
             .to(t, { x: () => s.clientWidth - t.offsetWidth }, 0)
             .to('[data-fill]', { scaleX: 1 }, 0)
             .to('[data-blob]', { x: () => w.querySelector('[data-fill]').offsetWidth }, 0)
+          return () => root.removeAttribute('data-chapter')
         })
         Promise.all([document.fonts.ready, loaded]).then(() => dead || ScrollTrigger.refresh())
       })
@@ -302,33 +324,36 @@ function Events() {
     return () => { dead = true; ro.disconnect(); io.disconnect(); mm?.revert() }
   }, [])
 
-  // Tab: scroll the page to where the focused panel is in view (the swipe strip scrolls itself).
+  // Tab: scroll the page to where the focused spread is centred (the swipe strip scrolls itself).
   const onFocus = (e) => {
     const col = e.target.closest('article')?.parentElement
     if (!col || matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const w = wrap.current, t = track.current
-    const p = Math.min((col.offsetLeft - t.querySelector('article').parentElement.offsetLeft) / (t.offsetWidth - stage.current.clientWidth), 1)
+    const w = wrap.current, t = track.current, sw = stage.current.clientWidth
+    const p = Math.min(Math.max((col.offsetLeft + col.offsetWidth / 2 - sw / 2) / (t.offsetWidth - sw), 0), 1)
     scrollTo({ top: w.getBoundingClientRect().top + scrollY + p * (w.offsetHeight - innerHeight) })
   }
 
-  const line = 'absolute bottom-[calc(2.5rem-5px)] left-(--r0)'
+  const line = 'absolute bottom-[calc(2.5rem-5px)]'
   return (
-    <section id="events" aria-labelledby="events-h" className="lg:scroll-mt-24 mb-24">
-      <div className="reveal mb-8">
-        <p className="font-mono text-[11px] uppercase tracking-widest text-sky-700">On the road</p>
-        <h2 id="events-h" className="mt-2 text-2xl font-bold text-slate-800">Events &amp; Competitions</h2>
-      </div>
+    <section id="events" aria-labelledby="events-h" className="mb-24 scroll-mt-(--bar-h) lg:scroll-mt-0">
       <div ref={wrap} className="h-[calc(var(--dist,0px)+100svh-var(--bar-h))] lg:h-[calc(var(--dist,0px)+100svh)] motion-reduce:h-auto">
         <div
           ref={stage}
-          className="@container sticky top-(--bar-h) -mx-6 flex h-[calc(100svh-var(--bar-h))] flex-col justify-center overflow-clip md:-mx-12 lg:top-0 lg:mx-0 lg:h-svh motion-reduce:static motion-reduce:h-auto motion-reduce:snap-x motion-reduce:snap-mandatory motion-reduce:overflow-x-auto motion-reduce:scroll-px-6 motion-reduce:py-2 md:motion-reduce:scroll-px-12 lg:motion-reduce:scroll-px-0"
+          className="events-stage @container sticky top-(--bar-h) -mx-6 h-[calc(100svh-var(--bar-h))] overflow-clip py-6 md:-mx-12 lg:top-0 lg:-mr-(--br) lg:-ml-(--bl) lg:h-svh motion-reduce:static motion-reduce:h-auto motion-reduce:snap-x motion-reduce:snap-mandatory motion-reduce:overflow-x-auto motion-reduce:scroll-px-6 md:motion-reduce:scroll-px-12 lg:motion-reduce:scroll-pl-(--bl)"
         >
-          <div ref={track} onFocus={onFocus} className="relative flex w-max gap-4 px-6 md:px-12 lg:gap-6 lg:px-0">
-            <span aria-hidden="true" className={`${line} h-px w-(--rw) bg-sky-200`} />
-            <span data-fill aria-hidden="true" className={`${line} h-px w-(--rw) origin-left bg-sky-500 motion-reduce:hidden`} style={{ transform: 'scaleX(0)' }} />
-            <span data-blob aria-hidden="true" className={`${line} z-10 -translate-x-1/2 translate-y-1/2 rounded-full bg-white p-0.5 will-change-transform`}>
+          <div ref={track} onFocus={onFocus} className="relative flex h-full w-max gap-[8cqw] px-6 md:px-12 lg:gap-[9cqw] lg:pr-(--br) lg:pl-(--bl)">
+            <span aria-hidden="true" className={`${line} inset-x-0 h-px bg-sky-200 lg:right-(--br) lg:left-(--bl)`} />
+            <span data-fill aria-hidden="true" className={`${line} left-(--r0) h-px w-(--rw) origin-left bg-sky-500 motion-reduce:hidden`} style={{ transform: 'scaleX(0)' }} />
+            <span data-blob aria-hidden="true" className={`${line} left-(--r0) z-10 -translate-x-1/2 translate-y-1/2 rounded-full bg-white p-0.5 will-change-transform`}>
               <Blob className="blob-calm blob-react" size={22} />
             </span>
+            <Leg className="w-[88cqw] lg:w-[calc(100cqw-var(--bl)-var(--br))]">
+              <div className="my-auto">
+                <p className="font-mono text-sm uppercase tracking-widest text-sky-700 lg:text-base">On the road</p>
+                <h2 id="events-h" className="mt-3 text-5xl font-extrabold tracking-tight text-balance text-slate-800 lg:text-7xl">Events &amp; Competitions</h2>
+                <p aria-hidden="true" className="mt-6 font-mono text-sm text-slate-500"><span className="motion-reduce:hidden">scroll</span><span className="hidden motion-reduce:inline">swipe</span> →</p>
+              </div>
+            </Leg>
             {events.map((e) => <Stop key={e.title} e={e} />)}
           </div>
         </div>
