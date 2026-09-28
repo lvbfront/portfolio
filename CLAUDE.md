@@ -26,18 +26,20 @@ From `package.json` (exact ranges there; versions below are the declared ranges)
 - **@emailjs/browser** ^4.4.1 — contact form
 - **react-icons** ^5.7.0 — only `fa6` icons (GitHub, LinkedIn, envelope)
 - **@vercel/analytics** ^2.0.1 — Web Analytics
-- **gsap** ^3.15.0 (+ its ScrollTrigger plugin) — `/cdg` only, so far
+- **gsap** ^3.15.0 (+ its ScrollTrigger plugin) — `/cdg` and the Home events section, lazy-loaded on both
 - **oxlint** ^1.81.0 — linter (`.oxlintrc.json`)
 
 No router library. No CSS-in-JS.
 
 **Animation rule:** GSAP + ScrollTrigger are allowed anywhere on the site. Do not migrate existing
 effects that already work (mascot, timeline line fill, reveals, card flip) without a reason. All
-other performance rules (§7) still apply. Today GSAP is imported **only from the lazy `Cdg.jsx`
-chunk**, so the homepage bundle does not carry it — keep it that way unless Home actually needs it.
-In `Cdg.jsx` it is a **dynamic import that starts after the window `load` event** (`motion`
-promise; effects set up GSAP in `motion.then`). This keeps its ~45 kB off the critical path of the
-`/cdg` LCP image: static import cost mobile Lighthouse 97 → 94.
+other performance rules (§7) still apply. GSAP is **never in the initial bundle**: it is only
+reached through dynamic `import('gsap')` / `import('gsap/ScrollTrigger')`, and both pages use those
+exact specifiers so Vite emits one shared pair of chunks (a visit to one page caches them for the
+other). In `Cdg.jsx` the import starts after the window `load` event (`motion` promise; effects
+set up GSAP in `motion.then`) — a static import cost mobile Lighthouse 97 → 94. On Home, `loadGsap()`
+in `Home.jsx` starts it when the page is idle after `load`, or when the events section comes within
+1.5 viewports, whichever is first. Existing Home effects stay on `scroll.js` + CSS — don't migrate.
 
 ## 3. How to run
 
@@ -79,6 +81,8 @@ public/
   apple-touch-icon.png  180px
   me.webp me-200.webp   hero photo (400px / 200px)
   cdg/                  poster.webp (1400w) + poster-700/-500.webp, team-toronto.webp, team-kaust.webp
+                        (the events section reuses these files — don't copy them)
+  events/               event photos, <slug>-<n>.webp (+ -700 variant) — see Events in §5
   robots.txt
 photo-source/           original uncropped photos — gitignored, never published
 ```
@@ -94,7 +98,7 @@ photo-source/           original uncropped photos — gitignored, never publishe
 - Hash routing was chosen so any static host works with no rewrite rules.
 
 **Where content lives** — all in `src/pages/Home.jsx`, top of file:
-`socials`, `experience`, `education`, `certifications`, `projects`, `skills`, `sections`.
+`socials`, `experience`, `education`, `certifications`, `projects`, `events`, `skills`, `sections`.
 The CDG page's own content (`tags`, `findings` with their `figure`s, `plates`, story data
 `REQUEST`/`SCAFFOLD`/`OUTPUT`/`STEERED`/`chapters`) is at the top of `src/pages/Cdg.jsx`.
 
@@ -135,11 +139,13 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
 - Three eye sets in the SVG (`eyes-normal`, `eyes-happy`, `eyes-surprised`), crossfaded by CSS.
 - **Moods:** `Shell` sets `data-mood` on `<html>` — `happy` scrolling down, `surprised` scrolling
   up, back to `normal` 700ms after movement stops. Threshold is 2px and *accumulates*, so slow
-  scrolling triggers it. Only elements with `.blob-react` react (mobile bar + timeline mascot); the
+  scrolling triggers it. Only elements with `.blob-react` react (mobile bar, timeline mascot,
+  events route blob); the
   card-back mascot does not.
-- `.blob-calm` disables the idle bob and blink (used by the timeline mascot).
+- `.blob-calm` disables the idle bob and blink (used by the timeline and events route mascots).
 - Instances: mobile bar (28px, reactive), card back (24px, idle), timeline cursor (22px, calm +
-  reactive) — the timeline renders once per list, so there are 4 on the homepage.
+  reactive) — the timeline renders once per list — and the events route blob (22px, calm +
+  reactive), so there are 5 on the homepage.
 - **Favicon variant** is a separate, simplified drawing in `public/favicon.svg` and duplicated in
   `src/favicon.js`: no folds, no hem, no outlines — they turn to mush at 16px. Sky disc behind it so
   it reads on light and dark browser themes. **If the mascot changes, both copies must be updated.**
@@ -269,11 +275,52 @@ numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 �
   trigger and pauses the timeline at `chN`) — for screenshots. Inert without the query; the router
   ignores it (`startsWith('#/cdg')`).
 
+### Events & Competitions ("The Route") — `Events` / `Stop` / `Photo` in `src/pages/Home.jsx`
+- Between Projects and Skills; `events` is in `sections`, so the desktop nav and scroll-spy include
+  it. Heading: mono `On the road` label + `h2` "Events & Competitions" (only the heading has
+  `.reveal` — a transform on the wrapper would skew ScrollTrigger's measurements).
+- **Data — `events` array.** Only `title` is required; every other field renders only if present
+  (empty strings count as absent): `date`, `place`, `organizer` (joined as the mono meta line above
+  the image), `label` (mono kicker), `result` (badge), `project`, `line`, `tags`,
+  `link: { label, href }`, `images`, `wide` (panel spans two on `lg`, laid out in two columns),
+  `stop` (overrides the city label under the dot, e.g. `Toronto → KAUST`). `images` holds one or
+  two entries: `{ src, w, h, alt, srcSet? }` or `{ placeholder: true }`; the second one is drawn
+  smaller, offset over the first's corner. Placeholder plates are pure CSS (sky gradient, camera
+  icon, "Photo coming soon"). Visionthon's `line` reads the Recyclable Materials Classifier
+  project's description, so the two stay in sync. A stop with no images is the short end panel.
+- **Structure:** a wrapper (`--dist` + one stage height tall) holding a **CSS `position: sticky`**
+  stage (`top: var(--bar-h)`, `height: calc(100svh - var(--bar-h))` below `lg`; `top: 0; 100svh` at
+  `lg`) with the horizontal track inside. Same technique as the `/cdg` story; not a ScrollTrigger pin.
+  The stage is full-bleed on phones (`-mx-6`/`md:-mx-12`) and the right column on `lg`; it is a
+  size container, so panels are `82cqw` (SUDS `88cqw`, end `60cqw`) on phones and half the column
+  (two visible) on `lg`, the wide one the full column.
+- **Measurement (no GSAP):** a ResizeObserver on the track sets `--dist` (track − stage width) on the
+  wrapper, and `--r0`/`--rw` (first dot centre, first→last dot span) on the track for the route line.
+  It then dispatches a `resize` event so `Home`/`Shell` re-measure the sections below, and refreshes
+  ScrollTrigger if loaded. Layout is final before GSAP arrives; until then the stage shows panel one.
+- **Motion:** one `gsap.matchMedia()` (reduced-motion query only — breakpoints are handled by CSS
+  and function values) with one timeline on one ScrollTrigger (`start "top top"`, `end "bottom
+  bottom"`, `scrub: 0.5`, `invalidateOnRefresh`): track `x` → `-(track − stage)`, route fill
+  `scaleX` 0→1, blob `x` → route span, all `ease: "none"`. Reverted on unmount (the /cdg round trip
+  works). `ScrollTrigger.refresh()` after fonts + `load`.
+- **Route:** gray line + sky fill between the first and last dot, a dot and mono city label under
+  each panel, the Blob (22px, calm + reactive, white disc) riding the fill's tip. All `aria-hidden`.
+- **Reduced motion:** wrapper `h-auto`, stage `static` and a native `snap-x` swipe strip; no GSAP
+  timeline, fill hidden, blob parked on the first dot.
+- **Accessibility:** a `<section>` labelled by its `h2`; each panel is an `<article tabIndex=0>`
+  labelled by its `h3`. On focus inside the track, the page scrolls to the scroll position where
+  that panel is in view (motion only — the swipe strip scrolls itself).
+- **Photo convention:** originals go in `photo-source/events/` (gitignored). Export each to
+  `public/events/<slug>-<n>.webp` at max 1400px wide plus a ~700px variant `<slug>-<n>-700.webp`,
+  then replace the stop's `{ placeholder: true }` with
+  `{ src: '/events/<slug>-<n>.webp', srcSet: '/events/<slug>-<n>-700.webp 700w, /events/<slug>-<n>.webp 1400w', w, h, alt }`.
+  Images are 4:3 `object-cover` (focus 50% 60%), lazy, with width/height set.
+
 ### Contact form — `src/components/Contact.jsx`
 - `@emailjs/browser`; service id, template id and public key are inline in that file. The public key
   is meant to be public. Do not add a private key to the client.
 - **EmailJS "Use Private Key" must stay OFF** for the service — browser calls fail when it is on.
-  **(unverified — not reproduced in this repo's history; treat as a standing instruction.)**
+  **(verified — the failure happened in an earlier session with it switched on.)**
 - **Gmail "Invalid grant" lesson (verified):** the dashboard can still say "Connected" while Google
   has revoked the token. Symptom: HTTP 412 `Gmail_API: Invalid grant`. Fix: disconnect, revoke
   EmailJS at `myaccount.google.com/permissions`, reconnect and **tick "Send email on your behalf"** —
@@ -306,14 +353,14 @@ numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 �
 
 Targets: Lighthouse ≥95 on both routes. Current (local preview): home 100/100/96/100; `/cdg`
 mobile 97–98/100/96/100 (LCP ≈2.3–2.4s, the hero poster), desktop 100/100/96/100. Home JS
-≈81.6 kB gzipped; CDG chunk ≈7.6 kB + GSAP 27.4 kB + ScrollTrigger 17.5 kB (both after `load`).
+≈84.0 kB gzipped (81.6 before the events section); CDG chunk ≈7.6 kB + GSAP 27.4 kB + ScrollTrigger 17.5 kB (both after `load`).
 
 Rules learned the hard way — breaking these caused real regressions:
 
 1. **No CSS transition on a scroll-linked transform.** A 150ms transition on `.tl-cursor` made the
    mascot permanently chase the page. Transitions are for the expression only.
 2. **One rAF loop.** Two loops (Shell + Home) wrote in different frames. (GSAP's ticker is a
-   second loop, but only on `/cdg`, and it drives only the story stage.)
+   second loop, but it only drives the `/cdg` story/effects and the Home events track.)
 3. **No React state per frame.** `setActive`/`setShowBar` only fire when the value changes.
 4. **No layout reads inside the loop.** Section tops, list geometry and card offsets are cached in
    `measure()` and recomputed on resize / after fonts load. The loop is arithmetic plus writes.
@@ -379,7 +426,8 @@ travelling mascot. (Remaining suspects if it is ever revisited: the five sticky 
 - **Prose on `/cdg` was written by Claude from the owner's brief** and describes real research —
   it should be re-read by the owner whenever it changes.
 - iPhone scroll smoothness is not fully verified from this machine; all numbers are Chrome +
-  CPU throttling. This includes the `/cdg` scroll story and iOS address-bar show/hide behaviour.
+  CPU throttling. This includes the `/cdg` scroll story, the Home events track, and iOS
+  address-bar show/hide behaviour.
 - **`/cdg` has a 0.03–0.06 CLS from the web-font swap**: when Plus Jakarta Sans lands, the glyphs
   of the huge title and the lede move within their boxes (box heights don't change, and it happens
   with animation off too). It was ~0.04 on `main` before the redesign. Still "good" (<0.1). Fix if

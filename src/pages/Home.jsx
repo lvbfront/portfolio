@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { FaGithub, FaLinkedin, FaEnvelope } from 'react-icons/fa6'
 import Contact from '../components/Contact.jsx'
 import ProfileCard from '../components/ProfileCard.jsx'
@@ -90,13 +90,66 @@ const projects = [
   },
 ]
 
+// Events & Competitions: one panel per stop on the route. Only `title` is required; every other
+// field renders only when present. `images`: { src, w, h, alt, srcSet? } or { placeholder: true }.
+// `wide` makes the panel span two; `stop` overrides the city label under its dot on the route.
+const events = [
+  {
+    title: 'Visionthon',
+    date: '',
+    place: 'Wadi Makkah',
+    organizer: 'Elvira',
+    result: '1st Place',
+    project: 'Recyclable Materials Classifier',
+    line: projects.find((p) => p.title === 'Recyclable Materials Classifier').description,
+    images: [{ placeholder: true }],
+  },
+  {
+    title: 'X-thon — University of Tabuk × NEOM',
+    date: '',
+    place: 'Tabuk',
+    result: 'Team project',
+    project: 'Road Sense',
+    line: 'An IoT and TinyML platform that turns vehicle fleets into mobile road sensors: an ESP32-C3 with an MPU6050 detects potholes and cracks on-device, geo-tags them, and feeds a city road-condition heatmap.',
+    tags: ['ESP32-C3', 'MPU6050', 'TinyML', 'IoT'],
+    images: [{ placeholder: true }, { placeholder: true }],
+  },
+  {
+    title: 'SUDS Program — University of Toronto',
+    wide: true,
+    label: 'AI Safety Research · HIVE Lab',
+    date: 'Jun–Aug 2026',
+    place: 'Toronto',
+    result: 'Best Poster, SUDS 2026',
+    line: 'Presented our research poster on template-injection jailbreaks in diffusion language models.',
+    link: { label: 'Read the research →', href: '#/cdg' },
+    images: [
+      { src: '/cdg/team-toronto.webp', w: 1000, h: 1333, alt: 'Presenting the poster with the team in Toronto' },
+      { src: '/cdg/poster.webp', srcSet: '/cdg/poster-700.webp 700w, /cdg/poster.webp 1400w', w: 1400, h: 1820, alt: 'Research poster: Mechanistic Analysis of Template-Injection Jailbreaks in Diffusion Language Models' },
+    ],
+  },
+  {
+    title: 'KAUST Academy Showcase',
+    stop: 'Toronto → KAUST',
+    label: 'KAUST Academy · AI Specialization',
+    date: '',
+    place: 'KAUST',
+    line: 'Presented the same research again at the KAUST Academy showcase.',
+    images: [
+      { src: '/cdg/team-kaust.webp', w: 1000, h: 1333, alt: 'Presenting the poster at the KAUST Academy showcase' },
+      { placeholder: true },
+    ],
+  },
+  { title: 'More stops soon' },
+]
+
 const skills = {
   AI: ['LLMs', 'Computer Vision', 'AI Agents', 'PyTorch', 'TensorFlow', 'Hugging Face', 'Scikit-learn'],
   'Languages & Data': ['Python', 'SQL', 'PostgreSQL', 'Pandas', 'NumPy'],
   'Web & Tools': ['Django', 'FastAPI', 'React', 'Tailwind', 'Docker', 'Git', 'AWS'],
 }
 
-const sections = ['about', 'experience', 'education', 'projects', 'skills', 'contact']
+const sections = ['about', 'experience', 'education', 'projects', 'events', 'skills', 'contact']
 
 const Tag = ({ i, children }) => (
   <li style={{ '--d': i }} className="rounded-full bg-sky-50 border border-sky-100 px-3 py-1 text-xs font-medium text-sky-700">{children}</li>
@@ -140,6 +193,149 @@ const Section = ({ id, title, reveal = true, children }) => (
     {children}
   </section>
 )
+
+// GSAP stays out of the initial bundle: fetched once the page is idle after load, or when the
+// events section comes within 1.5 viewports. Same specifiers as /cdg, so the chunks are shared.
+let gsapReady
+const loadGsap = () => (gsapReady ??= Promise.all([import('gsap'), import('gsap/ScrollTrigger')]).then(([{ gsap }, { ScrollTrigger }]) => {
+  gsap.registerPlugin(ScrollTrigger)
+  ScrollTrigger.config({ ignoreMobileResize: true })
+  return { gsap, ScrollTrigger }
+}))
+const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })))
+
+const Photo = ({ img, className = '' }) => img.placeholder ? (
+  <div className={`grid aspect-[4/3] place-content-center justify-items-center gap-2 rounded-xl bg-linear-to-br from-sky-50 to-sky-200 text-sky-700 ${className}`}>
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
+      <path d="M3 8h4l2-3h6l2 3h4v11H3Z" /><circle cx="12" cy="13" r="3.5" />
+    </svg>
+    <span className="px-2 text-center font-mono text-[11px] leading-tight text-balance">Photo coming soon</span>
+  </div>
+) : (
+  <img
+    src={img.src} srcSet={img.srcSet} sizes={img.srcSet && '(min-width: 1024px) 20rem, 80vw'} alt={img.alt}
+    width={img.w} height={img.h} loading="lazy"
+    className={`aspect-[4/3] rounded-xl object-cover object-[50%_60%] ${className}`}
+  />
+)
+
+// One stop: the panel, then its dot and city on the route line (data-dot is measured by Events).
+const Stop = ({ e }) => {
+  const id = useId()
+  const [main, second] = e.images ?? []
+  const meta = [e.date, e.place, e.organizer].filter(Boolean).join(' · ')
+  return (
+    <div className={`flex shrink-0 snap-start flex-col justify-end ${e.wide ? 'w-[88cqw] lg:w-[100cqw]' : `${main ? 'w-[82cqw]' : 'w-[60cqw]'} lg:w-[calc(50cqw-0.75rem)]`}`}>
+      <article
+        tabIndex={0}
+        aria-labelledby={id}
+        className={`grid gap-3 rounded-2xl border border-sky-100 bg-white p-4 shadow-md shadow-sky-100 ${e.wide ? 'lg:grid-cols-2 lg:gap-x-6' : ''} ${main ? '' : 'text-center'}`}
+      >
+        {meta && <p className="col-span-full font-mono text-[11px] uppercase tracking-wider text-slate-500">{meta}</p>}
+        {main && (
+          <div className={`relative ${second ? 'mr-3 mb-6' : ''}`}>
+            <Photo img={main} className="w-full" />
+            {second && <Photo img={second} className="absolute -right-3 -bottom-6 w-2/5 ring-4 ring-white" />}
+          </div>
+        )}
+        <div>
+          {e.label && <p className="mb-1 font-mono text-[11px] uppercase tracking-wider text-sky-700">{e.label}</p>}
+          <h3 id={id} className="font-semibold text-slate-800">{e.title}</h3>
+          {e.result && <p className="mt-2"><span className="inline-block rounded-full bg-sky-700 px-2.5 py-0.5 text-xs font-semibold text-white">{e.result}</span></p>}
+          {e.project && <p className="mt-2 text-sm font-semibold text-slate-800">{e.project}</p>}
+          {e.line && <p className="mt-1 text-sm leading-relaxed">{e.line}</p>}
+          {e.tags && <ul className="tags mt-3 flex flex-wrap gap-2" aria-label="Technologies">{e.tags.map((t, i) => <Tag key={t} i={i}>{t}</Tag>)}</ul>}
+          {e.link && <a href={e.link.href} className="mt-3 inline-block text-sm font-semibold text-sky-700 hover:underline">{e.link.label}</a>}
+        </div>
+      </article>
+      <div aria-hidden="true" className="mt-4 h-10 text-center font-mono text-[11px] uppercase tracking-wider text-slate-500">
+        <span data-dot className="relative mx-auto mb-2 block size-2.5 rounded-full bg-sky-500 ring-4 ring-white" />
+        {e.stop ?? e.place}
+      </div>
+    </div>
+  )
+}
+
+// "The Route": a CSS-sticky stage whose track moves right to left as the page scrolls through a
+// wrapper as tall as the travel plus one viewport. The wrapper height is measured here (no GSAP
+// needed), so layout is final before GSAP arrives; one scrubbed timeline then drives the track,
+// the route fill and the mascot. Reduced motion: a native swipe strip, blob parked at stop one.
+function Events() {
+  const wrap = useRef(null)
+  const stage = useRef(null)
+  const track = useRef(null)
+
+  useEffect(() => {
+    const w = wrap.current, s = stage.current, t = track.current
+    let ST, mm, started = false, dead = false
+    const ro = new ResizeObserver(() => {
+      const dots = t.querySelectorAll('[data-dot]')
+      const x = (d) => d.offsetLeft + d.offsetWidth / 2
+      t.style.setProperty('--r0', x(dots[0]) + 'px')
+      t.style.setProperty('--rw', x(dots[dots.length - 1]) - x(dots[0]) + 'px')
+      w.style.setProperty('--dist', t.offsetWidth - s.clientWidth + 'px')
+      dispatchEvent(new Event('resize')) // the page below moved: Home and Shell re-measure
+      ST?.refresh()
+    })
+    ro.observe(t)
+
+    const go = () => {
+      if (started || dead) return
+      started = true
+      io.disconnect()
+      loadGsap().then(({ gsap, ScrollTrigger }) => {
+        if (dead) return
+        ST = ScrollTrigger
+        mm = gsap.matchMedia(w)
+        mm.add('(prefers-reduced-motion: no-preference)', () => {
+          gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: w, start: 'top top', end: 'bottom bottom', scrub: 0.5, invalidateOnRefresh: true } })
+            .to(t, { x: () => s.clientWidth - t.offsetWidth }, 0)
+            .to('[data-fill]', { scaleX: 1 }, 0)
+            .to('[data-blob]', { x: () => w.querySelector('[data-fill]').offsetWidth }, 0)
+        })
+        Promise.all([document.fonts.ready, loaded]).then(() => dead || ScrollTrigger.refresh())
+      })
+    }
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && go(), { rootMargin: '150% 0px' })
+    io.observe(w)
+    loaded.then(() => (window.requestIdleCallback ?? setTimeout)(go))
+    return () => { dead = true; ro.disconnect(); io.disconnect(); mm?.revert() }
+  }, [])
+
+  // Tab: scroll the page to where the focused panel is in view (the swipe strip scrolls itself).
+  const onFocus = (e) => {
+    const col = e.target.closest('article')?.parentElement
+    if (!col || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const w = wrap.current, t = track.current
+    const p = Math.min((col.offsetLeft - t.querySelector('article').parentElement.offsetLeft) / (t.offsetWidth - stage.current.clientWidth), 1)
+    scrollTo({ top: w.getBoundingClientRect().top + scrollY + p * (w.offsetHeight - innerHeight) })
+  }
+
+  const line = 'absolute bottom-[calc(2.5rem-5px)] left-(--r0)'
+  return (
+    <section id="events" aria-labelledby="events-h" className="lg:scroll-mt-24 mb-24">
+      <div className="reveal mb-8">
+        <p className="font-mono text-[11px] uppercase tracking-widest text-sky-700">On the road</p>
+        <h2 id="events-h" className="mt-2 text-2xl font-bold text-slate-800">Events &amp; Competitions</h2>
+      </div>
+      <div ref={wrap} className="h-[calc(var(--dist,0px)+100svh-var(--bar-h))] lg:h-[calc(var(--dist,0px)+100svh)] motion-reduce:h-auto">
+        <div
+          ref={stage}
+          className="@container sticky top-(--bar-h) -mx-6 flex h-[calc(100svh-var(--bar-h))] flex-col justify-center overflow-clip md:-mx-12 lg:top-0 lg:mx-0 lg:h-svh motion-reduce:static motion-reduce:h-auto motion-reduce:snap-x motion-reduce:snap-mandatory motion-reduce:overflow-x-auto motion-reduce:scroll-px-6 motion-reduce:py-2 md:motion-reduce:scroll-px-12 lg:motion-reduce:scroll-px-0"
+        >
+          <div ref={track} onFocus={onFocus} className="relative flex w-max gap-4 px-6 md:px-12 lg:gap-6 lg:px-0">
+            <span aria-hidden="true" className={`${line} h-px w-(--rw) bg-sky-200`} />
+            <span data-fill aria-hidden="true" className={`${line} h-px w-(--rw) origin-left bg-sky-500 motion-reduce:hidden`} style={{ transform: 'scaleX(0)' }} />
+            <span data-blob aria-hidden="true" className={`${line} z-10 -translate-x-1/2 translate-y-1/2 rounded-full bg-white p-0.5 will-change-transform`}>
+              <Blob className="blob-calm blob-react" size={22} />
+            </span>
+            {events.map((e) => <Stop key={e.title} e={e} />)}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
 
 export default function Home() {
   const [active, setActive] = useState('about')
@@ -318,6 +514,8 @@ export default function Home() {
               })}
             </ul>
           </Section>
+
+          <Events />
 
           <Section id="skills" title="Skills">
             <dl className="space-y-6">
