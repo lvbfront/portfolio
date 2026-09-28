@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { FaGithub, FaLinkedin, FaEnvelope } from 'react-icons/fa6'
 import Contact from '../components/Contact.jsx'
 import ProfileCard from '../components/ProfileCard.jsx'
@@ -90,13 +90,66 @@ const projects = [
   },
 ]
 
+// Events & Competitions: one panel per stop on the route. Only `title` is required; every other
+// field renders only when present. `images`: { src, w, h, alt, srcSet? } or { placeholder: true }.
+// `wide` makes the panel span two; `stop` overrides the city label under its dot on the route.
+const events = [
+  {
+    title: 'Visionthon',
+    date: '',
+    place: 'Wadi Makkah',
+    organizer: 'Elvira',
+    result: '1st Place',
+    project: 'Recyclable Materials Classifier',
+    line: projects.find((p) => p.title === 'Recyclable Materials Classifier').description,
+    images: [{ placeholder: true }],
+  },
+  {
+    title: 'X-thon — University of Tabuk × NEOM',
+    date: '',
+    place: 'Tabuk',
+    result: 'Team project',
+    project: 'Road Sense',
+    line: 'An IoT and TinyML platform that turns vehicle fleets into mobile road sensors: an ESP32-C3 with an MPU6050 detects potholes and cracks on-device, geo-tags them, and feeds a city road-condition heatmap.',
+    tags: ['ESP32-C3', 'MPU6050', 'TinyML', 'IoT'],
+    images: [{ placeholder: true }, { placeholder: true }],
+  },
+  {
+    title: 'SUDS Program — University of Toronto',
+    wide: true,
+    label: 'AI Safety Research · HIVE Lab',
+    date: 'Jun–Aug 2026',
+    place: 'Toronto',
+    result: 'Best Poster, SUDS 2026',
+    line: 'Presented our research poster on template-injection jailbreaks in diffusion language models.',
+    link: { label: 'Read the research →', href: '#/cdg' },
+    images: [
+      { src: '/cdg/team-toronto.webp', w: 1000, h: 1333, alt: 'Presenting the poster with the team in Toronto' },
+      { src: '/cdg/poster.webp', srcSet: '/cdg/poster-700.webp 700w, /cdg/poster.webp 1400w', w: 1400, h: 1820, alt: 'Research poster: Mechanistic Analysis of Template-Injection Jailbreaks in Diffusion Language Models' },
+    ],
+  },
+  {
+    title: 'KAUST Academy Showcase',
+    stop: 'Toronto → KAUST',
+    label: 'KAUST Academy · AI Specialization',
+    date: '',
+    place: 'KAUST',
+    line: 'Presented the same research again at the KAUST Academy showcase.',
+    images: [
+      { src: '/cdg/team-kaust.webp', w: 1000, h: 1333, alt: 'Presenting the poster at the KAUST Academy showcase' },
+      { placeholder: true },
+    ],
+  },
+  { title: 'More stops soon' },
+]
+
 const skills = {
   AI: ['LLMs', 'Computer Vision', 'AI Agents', 'PyTorch', 'TensorFlow', 'Hugging Face', 'Scikit-learn'],
   'Languages & Data': ['Python', 'SQL', 'PostgreSQL', 'Pandas', 'NumPy'],
   'Web & Tools': ['Django', 'FastAPI', 'React', 'Tailwind', 'Docker', 'Git', 'AWS'],
 }
 
-const sections = ['about', 'experience', 'education', 'projects', 'skills', 'contact']
+const sections = ['about', 'experience', 'education', 'projects', 'events', 'skills', 'contact']
 
 const Tag = ({ i, children }) => (
   <li style={{ '--d': i }} className="rounded-full bg-sky-50 border border-sky-100 px-3 py-1 text-xs font-medium text-sky-700">{children}</li>
@@ -140,6 +193,174 @@ const Section = ({ id, title, reveal = true, children }) => (
     {children}
   </section>
 )
+
+// GSAP stays out of the initial bundle: fetched once the page is idle after load, or when the
+// events section comes within 1.5 viewports. Same specifiers as /cdg, so the chunks are shared.
+let gsapReady
+const loadGsap = () => (gsapReady ??= Promise.all([import('gsap'), import('gsap/ScrollTrigger')]).then(([{ gsap }, { ScrollTrigger }]) => {
+  gsap.registerPlugin(ScrollTrigger)
+  ScrollTrigger.config({ ignoreMobileResize: true })
+  return { gsap, ScrollTrigger }
+}))
+const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })))
+
+const Photo = ({ img, className = '' }) => img.placeholder ? (
+  <div className={`grid aspect-[4/3] place-content-center justify-items-center gap-2 rounded-xl bg-linear-to-br from-sky-50 to-sky-200 text-sky-700 ${className}`}>
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
+      <path d="M3 8h4l2-3h6l2 3h4v11H3Z" /><circle cx="12" cy="13" r="3.5" />
+    </svg>
+    <span className="px-2 text-center font-mono text-[11px] leading-tight text-balance">Photo coming soon</span>
+  </div>
+) : (
+  <img
+    src={img.src} srcSet={img.srcSet} sizes={img.srcSet && '(min-width: 1024px) 40vw, 90vw'} alt={img.alt}
+    width={img.w} height={img.h} loading="lazy"
+    className={`aspect-[4/3] rounded-xl object-cover object-[50%_60%] ${className}`}
+  />
+)
+
+// One leg of the route: its content centred in the stage, then its dot and city on the route line
+// (data-dot is measured by Events).
+const Leg = ({ className, place, children }) => (
+  <div className={`flex shrink-0 snap-start flex-col ${className}`}>
+    {children}
+    <div aria-hidden="true" className="h-10 text-center font-mono text-[11px] uppercase tracking-wider text-slate-500">
+      <span data-dot className="relative mx-auto mb-2 block size-2.5 rounded-full bg-sky-500 ring-4 ring-white" />
+      {place}
+    </div>
+  </div>
+)
+
+// One event as an open spread: no card, photos beside the text on lg, above it on phones.
+const Stop = ({ e }) => {
+  const id = useId()
+  const [main, second] = e.images ?? []
+  const meta = [e.date, e.place, e.organizer].filter(Boolean).join(' · ')
+  // the end stop mirrors the heading: it fills the right column, and its extra margin pushes the
+  // previous spread off-screen, so the left column can fade back in over empty space
+  const width = !main ? 'w-[88cqw] lg:ml-(--bl) lg:w-[calc(100cqw-var(--bl)-var(--br))]' : e.wide ? 'w-[88cqw] lg:w-[70cqw]' : 'w-[88cqw] lg:w-[62cqw]'
+  return (
+    <Leg className={width} place={e.stop ?? e.place}>
+      <article
+        tabIndex={0}
+        aria-labelledby={id}
+        className={`my-auto grid gap-5 rounded-2xl ${main ? 'lg:grid-cols-[1.2fr_1fr] lg:items-center lg:gap-x-12' : 'text-center'}`}
+      >
+        {meta && <p className="col-span-full font-mono text-xs uppercase tracking-wider text-slate-500">{meta}</p>}
+        {main && (
+          <div className={`relative ${second ? 'mr-4 mb-8' : ''}`}>
+            <Photo img={main} className="w-full" />
+            {second && <Photo img={second} className="absolute -right-4 -bottom-8 w-2/5 ring-4 ring-white" />}
+          </div>
+        )}
+        <div>
+          {e.label && <p className="mb-2 font-mono text-xs uppercase tracking-wider text-sky-700">{e.label}</p>}
+          <h3 id={id} className={main ? 'text-2xl font-bold text-slate-800 lg:text-4xl' : 'text-3xl font-medium text-slate-500 lg:text-5xl'}>{e.title}</h3>
+          {e.result && <p className="mt-3"><span className="inline-block rounded-full bg-sky-700 px-3 py-1 text-sm font-semibold text-white">{e.result}</span></p>}
+          {e.project && <p className="mt-3 font-semibold text-slate-800 lg:text-lg">{e.project}</p>}
+          {e.line && <p className="mt-1 leading-relaxed lg:text-xl">{e.line}</p>}
+          {e.tags && <ul className="tags mt-4 flex flex-wrap gap-2" aria-label="Technologies">{e.tags.map((t, i) => <Tag key={t} i={i}>{t}</Tag>)}</ul>}
+          {e.link && <a href={e.link.href} className="mt-4 inline-block font-semibold text-sky-700 hover:underline lg:text-lg">{e.link.label}</a>}
+        </div>
+      </article>
+    </Leg>
+  )
+}
+
+// "The Route": a CSS-sticky stage whose track moves right to left as the page scrolls through a
+// wrapper as tall as the travel plus one viewport. The wrapper height is measured here (no GSAP
+// needed), so layout is final before GSAP arrives; one scrubbed timeline then drives the track,
+// the route fill and the mascot. On lg the stage breaks out to the full viewport width and the
+// left column fades out while it is stuck (data-chapter on <html>, see .sidecol in index.css).
+// Reduced motion: a native swipe strip, blob parked at the first dot.
+function Events() {
+  const wrap = useRef(null)
+  const stage = useRef(null)
+  const track = useRef(null)
+
+  useEffect(() => {
+    const root = document.documentElement
+    const w = wrap.current, s = stage.current, t = track.current
+    let ST, mm, started = false, dead = false
+    const ro = new ResizeObserver(() => {
+      const r = w.getBoundingClientRect()
+      w.style.setProperty('--bl', r.left + 'px') // lg: the stage bleeds out by these, to the viewport edges
+      w.style.setProperty('--br', root.clientWidth - r.right + 'px')
+      const dots = t.querySelectorAll('[data-dot]')
+      const x = (d) => d.offsetLeft + d.offsetWidth / 2
+      t.style.setProperty('--r0', x(dots[0]) + 'px')
+      t.style.setProperty('--rw', x(dots[dots.length - 1]) - x(dots[0]) + 'px')
+      w.style.setProperty('--dist', t.offsetWidth - s.clientWidth + 'px')
+      dispatchEvent(new Event('resize')) // the page below moved: Home and Shell re-measure
+      ST?.refresh()
+    })
+    ro.observe(t)
+
+    const go = () => {
+      if (started || dead) return
+      started = true
+      io.disconnect()
+      loadGsap().then(({ gsap, ScrollTrigger }) => {
+        if (dead) return
+        ST = ScrollTrigger
+        mm = gsap.matchMedia(w)
+        // one of motion/reduce always matches — gsap.matchMedia skips the callback when none does
+        mm.add({ motion: '(prefers-reduced-motion: no-preference)', reduce: '(prefers-reduced-motion: reduce)' }, ({ conditions: { reduce } }) => {
+          const onToggle = (st) => root.toggleAttribute('data-chapter', st.isActive)
+          // reduced motion: the strip is full width too, so the left column hides while it's on screen
+          if (reduce) ScrollTrigger.create({ trigger: w, start: 'top bottom', end: 'bottom top', onToggle })
+          else gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: w, start: 'top top', end: 'bottom bottom', scrub: 0.5, invalidateOnRefresh: true, onToggle } })
+            .to(t, { x: () => s.clientWidth - t.offsetWidth }, 0)
+            .to('[data-fill]', { scaleX: 1 }, 0)
+            .to('[data-blob]', { x: () => w.querySelector('[data-fill]').offsetWidth }, 0)
+          return () => root.removeAttribute('data-chapter')
+        })
+        Promise.all([document.fonts.ready, loaded]).then(() => dead || ScrollTrigger.refresh())
+      })
+    }
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && go(), { rootMargin: '150% 0px' })
+    io.observe(w)
+    loaded.then(() => (window.requestIdleCallback ?? setTimeout)(go))
+    return () => { dead = true; ro.disconnect(); io.disconnect(); mm?.revert() }
+  }, [])
+
+  // Tab: scroll the page to where the focused spread is centred (the swipe strip scrolls itself).
+  const onFocus = (e) => {
+    const col = e.target.closest('article')?.parentElement
+    if (!col || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const w = wrap.current, t = track.current, sw = stage.current.clientWidth
+    const p = Math.min(Math.max((col.offsetLeft + col.offsetWidth / 2 - sw / 2) / (t.offsetWidth - sw), 0), 1)
+    scrollTo({ top: w.getBoundingClientRect().top + scrollY + p * (w.offsetHeight - innerHeight) })
+  }
+
+  const line = 'absolute bottom-[calc(2.5rem-5px)]'
+  return (
+    <section id="events" aria-labelledby="events-h" className="mb-24 scroll-mt-(--bar-h) lg:scroll-mt-0">
+      <div ref={wrap} className="h-[calc(var(--dist,0px)+100svh-var(--bar-h))] lg:h-[calc(var(--dist,0px)+100svh)] motion-reduce:h-auto">
+        <div
+          ref={stage}
+          className="events-stage @container sticky top-(--bar-h) -mx-6 h-[calc(100svh-var(--bar-h))] overflow-clip py-6 md:-mx-12 lg:top-0 lg:-mr-(--br) lg:-ml-(--bl) lg:h-svh motion-reduce:static motion-reduce:h-auto motion-reduce:snap-x motion-reduce:snap-mandatory motion-reduce:overflow-x-auto motion-reduce:scroll-px-6 md:motion-reduce:scroll-px-12 lg:motion-reduce:scroll-pl-(--bl)"
+        >
+          <div ref={track} onFocus={onFocus} className="relative flex h-full w-max gap-[8cqw] px-6 md:px-12 lg:gap-[9cqw] lg:pr-(--br) lg:pl-(--bl)">
+            <span aria-hidden="true" className={`${line} inset-x-0 h-px bg-sky-200 lg:right-(--br) lg:left-(--bl)`} />
+            <span data-fill aria-hidden="true" className={`${line} left-(--r0) h-px w-(--rw) origin-left bg-sky-500 motion-reduce:hidden`} style={{ transform: 'scaleX(0)' }} />
+            <span data-blob aria-hidden="true" className={`${line} left-(--r0) z-10 -translate-x-1/2 translate-y-1/2 rounded-full bg-white p-0.5 will-change-transform`}>
+              <Blob className="blob-calm blob-react" size={22} />
+            </span>
+            <Leg className="w-[88cqw] lg:w-[calc(100cqw-var(--bl)-var(--br))]">
+              <div className="my-auto">
+                <p className="font-mono text-sm uppercase tracking-widest text-sky-700 lg:text-base">On the road</p>
+                <h2 id="events-h" className="mt-3 text-5xl font-extrabold tracking-tight text-balance text-slate-800 lg:text-7xl">Events &amp; Competitions</h2>
+                <p aria-hidden="true" className="mt-6 font-mono text-sm text-slate-500"><span className="motion-reduce:hidden">scroll</span><span className="hidden motion-reduce:inline">swipe</span> →</p>
+              </div>
+            </Leg>
+            {events.map((e) => <Stop key={e.title} e={e} />)}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
 
 export default function Home() {
   const [active, setActive] = useState('about')
@@ -318,6 +539,8 @@ export default function Home() {
               })}
             </ul>
           </Section>
+
+          <Events />
 
           <Section id="skills" title="Skills">
             <dl className="space-y-6">
