@@ -358,8 +358,9 @@ numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 �
   (gdg-uj, kaust). The KAUST folder also holds a copy of the original behind `/cdg/team-kaust.webp`
   (`team-kaust-original.jpeg`); `/cdg` still uses its own file, and the events stop uses
   `kaust-2.webp`, exported from that copy, so the photo is published twice on purpose — one per
-  page. If a photo's subject sits near an edge, crop the source band at export so both the 4:3 and
-  the short-phone 2:1 crops keep it (kaust-3, the "I love KAUST" sign, is a 1206×804 band).
+  page. If a photo's subject runs edge to edge, export a full-width band no wider than 4:3 (so the
+  4:3 slots never crop the sides), placed so the short-phone 2:1 crop (focus 45%) only trims sky and
+  ground — kaust-3, the "I love KAUST" sign, is the 1206×906 band from y=515 of the original.
   Exports so far were made with the already-installed ImageMagick (no npm dependency):
   `magick <in> -auto-orient -strip -resize '1400x>' -quality 78 <out>.webp` (and `'700x>'` for the
   variant); `-strip` removes EXIF/GPS (check with `webpinfo`: only a `VP8` chunk). macOS screenshot
