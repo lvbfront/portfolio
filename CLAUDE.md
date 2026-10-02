@@ -81,8 +81,8 @@ public/
   apple-touch-icon.png  180px
   me.webp me-200.webp   hero photo (400px / 200px)
   cdg/                  poster.webp (1400w) + poster-700/-500.webp, team-toronto.webp, team-kaust.webp
-                        (the events section reuses these files — don't copy them)
-  events/               event photos, <slug>-<n>.webp (+ -700 variant) — see Events in §5
+                        (/cdg's own; the events section uses public/events/ only)
+  events/               event photos, <slug>-<n>.webp (+ -700 variant), gdg-uj-1…4, kaust-1…3 — see §5
   robots.txt
 photo-source/           original uncropped photos — gitignored, never published
 ```
@@ -290,9 +290,26 @@ numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 �
   (empty strings count as absent): `date`, `place`, `organizer` (joined as the mono meta line above
   the photos), `label` (mono kicker), `result` (badge), `project`, `line`, `tags`,
   `link: { label, href }`, `images`, `wide` (a wider spread on `lg`), `stop` (overrides the city
-  label under the dot, e.g. `Toronto → KAUST`). `images` holds one or two entries:
-  `{ src, w, h, alt, srcSet? }` or `{ placeholder: true }`; the second one is drawn smaller, offset
-  over the first's corner. Placeholder plates are pure CSS (sky gradient, camera icon, "Photo coming
+  label under the dot, e.g. `Toronto → KAUST`). `images` holds 1–4 entries:
+  `{ src, w, h, alt, srcSet?, pos? }` or `{ placeholder: true }`. `pos` is an object-position class
+  that replaces the default crop focus for a photo whose subject sits on an edge (kaust-1 uses
+  `object-right-top`: the logo is in its top-right corner, so 4:3 slots trim the left and 2:1 slots
+  trim the bottom seats). The first is the main photo (full width,
+  4:3). **One extra** sits smaller (`w-2/5`) offset over its bottom-right corner. **Two or three
+  extras** (`row` in `Stop`) form a row of equal 4:3 photos (white ring), each ≈⅓ of the main
+  photo: on phones a plain row under it (no overlap, and the gap above the text is 8px shorter so
+  it fits 360×740), on `lg` straddling its bottom edge (`translate-y-1/2`, `mb-[12%]` reserves the
+  overhang); the spread's photo column also gets more of the width (`1.7fr` vs `1.2fr`). Use
+  `wide: true` with a photo row. Pick the main photo so the row doesn't cover anyone's head.
+  `link` hrefs starting with `http` open in a new tab.
+- **Short phones — the `short` variant** (`@custom-variant` in `index.css`: below `lg` and
+  `max-height: 760px`, e.g. iPhone SE 375×667, 360×740). There a phone leaves only ~520–600px above
+  the route, and the tallest spreads (X-thon, GDG) used to push their dot and city label below the
+  stage. Under `short`, in this order: photos go 2:1 (focus 50% 45% so heads stay in frame), the
+  spread's row gap 20→12px, then the title `text-xl` and the description 15px `leading-snug`. The
+  description and link are never cut. Tall phones and desktop are pixel-identical (every `short:`
+  rule sits inside that media query). Headroom: X-thon 510/523px at 375×667. A longer description
+  on a stop may need re-checking at 375×667 — every spread plus its dot must fit. Placeholder plates are pure CSS (sky gradient, camera icon, "Photo coming
   soon"). Visionthon's `line` reads the Recyclable Materials Classifier project's description, so
   the two stay in sync. A stop with no images is the end spread.
 - **Structure:** a wrapper (`--dist` + one stage height tall) holding a **CSS `position: sticky`**
@@ -340,6 +357,18 @@ numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 �
   then replace the stop's `{ placeholder: true }` with
   `{ src: '/events/<slug>-<n>.webp', srcSet: '/events/<slug>-<n>-700.webp 700w, /events/<slug>-<n>.webp 1400w', w, h, alt }`.
   Images are 4:3 `object-cover` (focus 50% 60%), lazy, with width/height set.
+  **One folder per event:** all of an event's originals live together in `photo-source/events/<slug>/`
+  (gdg-uj, kaust). The KAUST folder also holds a copy of the original behind `/cdg/team-kaust.webp`
+  (`team-kaust-original.jpeg`); `/cdg` still uses its own file, and the events stop uses
+  `kaust-2.webp`, exported from that copy, so the photo is published twice on purpose — one per
+  page. If a photo's subject runs edge to edge, export a full-width band no wider than 4:3 (so the
+  4:3 slots never crop the sides), placed so the short-phone 2:1 crop (focus 45%) only trims sky and
+  ground — kaust-3, the "I love KAUST" sign, is the 1206×906 band from y=515 of the original.
+  Exports so far were made with the already-installed ImageMagick (no npm dependency):
+  `magick <in> -auto-orient -strip -resize '1400x>' -quality 78 <out>.webp` (and `'700x>'` for the
+  variant); `-strip` removes EXIF/GPS (check with `webpinfo`: only a `VP8` chunk). macOS screenshot
+  names contain a narrow no-break space before "PM" — use globs, not typed names. Alt texts describe
+  what is visible; never guess names.
 
 ### Contact form — `src/components/Contact.jsx`
 - `@emailjs/browser`; service id, template id and public key are inline in that file. The public key

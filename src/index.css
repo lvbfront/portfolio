@@ -4,6 +4,9 @@
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
+/* Short phones (iPhone SE, 360×740): the events spreads tighten so each fits above its route dot */
+@custom-variant short (@media (max-width: 1023px) and (max-height: 760px));
+
 html {
   scroll-behavior: smooth;
 }

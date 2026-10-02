@@ -91,7 +91,9 @@ const projects = [
 ]
 
 // Events & Competitions: one panel per stop on the route. Only `title` is required; every other
-// field renders only when present. `images`: { src, w, h, alt, srcSet? } or { placeholder: true }.
+// field renders only when present. `images` (1–4): { src, w, h, alt, srcSet?, pos? } or { placeholder: true };
+// `pos` replaces the default crop focus (an object-position class) for a photo whose subject sits on an edge;
+// the first is the main photo; one more sits smaller on its corner, two or three form a row under it.
 // `wide` makes the panel span two; `stop` overrides the city label under its dot on the route.
 const events = [
   {
@@ -130,14 +132,33 @@ const events = [
   },
   {
     title: 'KAUST Academy Showcase',
+    wide: true,
     stop: 'Toronto → KAUST',
     label: 'KAUST Academy · AI Specialization',
     date: '',
     place: 'KAUST',
     line: 'Presented the same research again at the KAUST Academy showcase.',
     images: [
-      { src: '/cdg/team-kaust.webp', w: 1000, h: 1333, alt: 'Presenting the poster at the KAUST Academy showcase' },
-      { placeholder: true },
+      { src: '/events/kaust-1.webp', srcSet: '/events/kaust-1-700.webp 700w, /events/kaust-1.webp 1400w', w: 1400, h: 936, pos: 'object-right-top', alt: 'A large auditorium full of seated attendees, with the KAUST Academy logo on the wall' },
+      { src: '/events/kaust-2.webp', srcSet: '/events/kaust-2-700.webp 700w, /events/kaust-2.webp 1200w', w: 1200, h: 1600, alt: 'Presenting the poster at the KAUST Academy showcase' },
+      { src: '/events/kaust-3.webp', srcSet: '/events/kaust-3-700.webp 700w, /events/kaust-3.webp 1206w', w: 1206, h: 906, alt: 'A colourful "I love KAUST" sign on a waterfront promenade' },
+    ],
+  },
+  {
+    title: 'You Direct | AI Executes',
+    wide: true,
+    label: 'Workshop',
+    date: '26 Sep 2026',
+    place: 'Wadi Jeddah',
+    stop: 'Jeddah',
+    organizer: 'GDG On Campus | UJ',
+    line: 'A workshop on turning an idea into a real tech project with generative AI tools like Codex and Claude: you direct, the AI executes. I built parts of Sky Soarer there.',
+    link: { label: 'Sky Soarer →', href: 'https://github.com/lvbfront/Sky-Soarer' },
+    images: [
+      { src: '/events/gdg-uj-1.webp', srcSet: '/events/gdg-uj-1-700.webp 700w, /events/gdg-uj-1.webp 1400w', w: 1400, h: 1053, alt: 'A presenter in a white thobe speaks beside a large screen showing Arabic calligraphy, facing a seated audience' },
+      { src: '/events/gdg-uj-2.webp', srcSet: '/events/gdg-uj-2-700.webp 700w, /events/gdg-uj-2.webp 1400w', w: 1400, h: 933, alt: 'Attendees seated at tables with laptops, watching the session' },
+      { src: '/events/gdg-uj-3.webp', srcSet: '/events/gdg-uj-3-700.webp 700w, /events/gdg-uj-3.webp 1400w', w: 1400, h: 765, alt: 'Screenshot of Sky Soarer, my web game: a low-poly bird flying over islands and water' },
+      { src: '/events/gdg-uj-4.webp', srcSet: '/events/gdg-uj-4-700.webp 700w, /events/gdg-uj-4.webp 1400w', w: 1400, h: 994, alt: 'Certificate of attendance for You Direct | AI Executes, Google Developer Group on Campus, University of Jeddah' },
     ],
   },
   { title: 'More stops soon' },
@@ -205,7 +226,7 @@ const loadGsap = () => (gsapReady ??= Promise.all([import('gsap'), import('gsap/
 const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })))
 
 const Photo = ({ img, className = '' }) => img.placeholder ? (
-  <div className={`grid aspect-[4/3] place-content-center justify-items-center gap-2 rounded-xl bg-linear-to-br from-sky-50 to-sky-200 text-sky-700 ${className}`}>
+  <div className={`grid aspect-[4/3] short:aspect-[2/1] place-content-center justify-items-center gap-2 rounded-xl bg-linear-to-br from-sky-50 to-sky-200 text-sky-700 ${className}`}>
     <svg aria-hidden="true" viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
       <path d="M3 8h4l2-3h6l2 3h4v11H3Z" /><circle cx="12" cy="13" r="3.5" />
     </svg>
@@ -215,7 +236,7 @@ const Photo = ({ img, className = '' }) => img.placeholder ? (
   <img
     src={img.src} srcSet={img.srcSet} sizes={img.srcSet && '(min-width: 1024px) 40vw, 90vw'} alt={img.alt}
     width={img.w} height={img.h} loading="lazy"
-    className={`aspect-[4/3] rounded-xl object-cover object-[50%_60%] ${className}`}
+    className={`aspect-[4/3] short:aspect-[2/1] rounded-xl object-cover ${img.pos ?? 'object-[50%_60%] short:object-[50%_45%]'} ${className}`}
   />
 )
 
@@ -234,7 +255,8 @@ const Leg = ({ className, place, children }) => (
 // One event as an open spread: no card, photos beside the text on lg, above it on phones.
 const Stop = ({ e }) => {
   const id = useId()
-  const [main, second] = e.images ?? []
+  const [main, ...rest] = e.images ?? []
+  const row = rest.length > 1 // photo row: under the main photo on phones, straddling its bottom edge on lg
   const meta = [e.date, e.place, e.organizer].filter(Boolean).join(' · ')
   // the end stop mirrors the heading: it fills the right column, and its extra margin pushes the
   // previous spread off-screen, so the left column can fade back in over empty space
@@ -244,23 +266,27 @@ const Stop = ({ e }) => {
       <article
         tabIndex={0}
         aria-labelledby={id}
-        className={`my-auto grid gap-5 rounded-2xl ${main ? 'lg:grid-cols-[1.2fr_1fr] lg:items-center lg:gap-x-12' : 'text-center'}`}
+        className={`my-auto grid gap-5 short:gap-3 rounded-2xl ${main ? `${row ? 'lg:grid-cols-[1.7fr_1fr]' : 'lg:grid-cols-[1.2fr_1fr]'} lg:items-center lg:gap-x-12` : 'text-center'}`}
       >
         {meta && <p className="col-span-full font-mono text-xs uppercase tracking-wider text-slate-500">{meta}</p>}
         {main && (
-          <div className={`relative ${second ? 'mr-4 mb-8' : ''}`}>
+          <div className={`relative ${row ? 'lg:mr-4 lg:mb-[12%]' : rest.length ? 'mr-4 mb-8' : ''}`}>
             <Photo img={main} className="w-full" />
-            {second && <Photo img={second} className="absolute -right-4 -bottom-8 w-2/5 ring-4 ring-white" />}
+            {rest.length > 0 && (
+              <div className={`flex gap-2 ${row ? 'mt-2 lg:absolute lg:-right-4 lg:bottom-0 lg:left-8 lg:mt-0 lg:translate-y-1/2' : 'absolute -right-4 -bottom-8 w-2/5'}`}>
+                {rest.map((img, i) => <Photo key={i} img={img} className="min-w-0 flex-1 ring-4 ring-white" />)}
+              </div>
+            )}
           </div>
         )}
-        <div>
+        <div className={row ? 'max-lg:-mt-2' : undefined}>
           {e.label && <p className="mb-2 font-mono text-xs uppercase tracking-wider text-sky-700">{e.label}</p>}
-          <h3 id={id} className={main ? 'text-2xl font-bold text-slate-800 lg:text-4xl' : 'text-3xl font-medium text-slate-500 lg:text-5xl'}>{e.title}</h3>
+          <h3 id={id} className={main ? 'text-2xl font-bold text-slate-800 short:text-xl lg:text-4xl' : 'text-3xl font-medium text-slate-500 lg:text-5xl'}>{e.title}</h3>
           {e.result && <p className="mt-3"><span className="inline-block rounded-full bg-sky-700 px-3 py-1 text-sm font-semibold text-white">{e.result}</span></p>}
           {e.project && <p className="mt-3 font-semibold text-slate-800 lg:text-lg">{e.project}</p>}
-          {e.line && <p className="mt-1 leading-relaxed lg:text-xl">{e.line}</p>}
+          {e.line && <p className="mt-1 leading-relaxed short:text-[15px] short:leading-snug lg:text-xl">{e.line}</p>}
           {e.tags && <ul className="tags mt-4 flex flex-wrap gap-2" aria-label="Technologies">{e.tags.map((t, i) => <Tag key={t} i={i}>{t}</Tag>)}</ul>}
-          {e.link && <a href={e.link.href} className="mt-4 inline-block font-semibold text-sky-700 hover:underline lg:text-lg">{e.link.label}</a>}
+          {e.link && <a href={e.link.href} target={e.link.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="mt-4 inline-block font-semibold text-sky-700 hover:underline lg:text-lg">{e.link.label}</a>}
         </div>
       </article>
     </Leg>
