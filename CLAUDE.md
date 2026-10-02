@@ -82,7 +82,7 @@ public/
   me.webp me-200.webp   hero photo (400px / 200px)
   cdg/                  poster.webp (1400w) + poster-700/-500.webp, team-toronto.webp, team-kaust.webp
                         (the events section reuses these files — don't copy them)
-  events/               event photos, <slug>-<n>.webp (+ -700 variant) — see Events in §5
+  events/               event photos, <slug>-<n>.webp (+ -700 variant), e.g. gdg-uj-1…4 — see §5
   robots.txt
 photo-source/           original uncropped photos — gitignored, never published
 ```
@@ -290,9 +290,11 @@ numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 �
   (empty strings count as absent): `date`, `place`, `organizer` (joined as the mono meta line above
   the photos), `label` (mono kicker), `result` (badge), `project`, `line`, `tags`,
   `link: { label, href }`, `images`, `wide` (a wider spread on `lg`), `stop` (overrides the city
-  label under the dot, e.g. `Toronto → KAUST`). `images` holds one or two entries:
-  `{ src, w, h, alt, srcSet? }` or `{ placeholder: true }`; the second one is drawn smaller, offset
-  over the first's corner. Placeholder plates are pure CSS (sky gradient, camera icon, "Photo coming
+  label under the dot, e.g. `Toronto → KAUST`). `images` holds 1–4 entries:
+  `{ src, w, h, alt, srcSet? }` or `{ placeholder: true }`. The first is the main photo (full width,
+  4:3); the rest sit in one row of equal 4:3 thumbnails (white ring) hanging off its bottom-right
+  corner — the row is `w-2/5` for one extra (the original two-image look) and `w-[85%]` for two or
+  three. Pick the main photo so the thumbnails don't cover anyone's head. Placeholder plates are pure CSS (sky gradient, camera icon, "Photo coming
   soon"). Visionthon's `line` reads the Recyclable Materials Classifier project's description, so
   the two stay in sync. A stop with no images is the end spread.
 - **Structure:** a wrapper (`--dist` + one stage height tall) holding a **CSS `position: sticky`**
@@ -340,6 +342,11 @@ numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 �
   then replace the stop's `{ placeholder: true }` with
   `{ src: '/events/<slug>-<n>.webp', srcSet: '/events/<slug>-<n>-700.webp 700w, /events/<slug>-<n>.webp 1400w', w, h, alt }`.
   Images are 4:3 `object-cover` (focus 50% 60%), lazy, with width/height set.
+  Exports so far were made with the already-installed ImageMagick (no npm dependency):
+  `magick <in> -auto-orient -strip -resize '1400x>' -quality 78 <out>.webp` (and `'700x>'` for the
+  variant); `-strip` removes EXIF/GPS (check with `webpinfo`: only a `VP8` chunk). macOS screenshot
+  names contain a narrow no-break space before "PM" — use globs, not typed names. Alt texts describe
+  what is visible; never guess names.
 
 ### Contact form — `src/components/Contact.jsx`
 - `@emailjs/browser`; service id, template id and public key are inline in that file. The public key

@@ -91,7 +91,8 @@ const projects = [
 ]
 
 // Events & Competitions: one panel per stop on the route. Only `title` is required; every other
-// field renders only when present. `images`: { src, w, h, alt, srcSet? } or { placeholder: true }.
+// field renders only when present. `images` (1–4): { src, w, h, alt, srcSet? } or { placeholder: true };
+// the first is the main photo, the rest sit smaller along its bottom-right corner.
 // `wide` makes the panel span two; `stop` overrides the city label under its dot on the route.
 const events = [
   {
@@ -138,6 +139,21 @@ const events = [
     images: [
       { src: '/cdg/team-kaust.webp', w: 1000, h: 1333, alt: 'Presenting the poster at the KAUST Academy showcase' },
       { placeholder: true },
+    ],
+  },
+  {
+    title: 'You Direct | AI Executes',
+    label: 'Workshop',
+    date: '26 Sep 2026',
+    place: 'Wadi Jeddah',
+    stop: 'Jeddah',
+    organizer: 'GDG On Campus | UJ',
+    line: 'A workshop on turning an idea into a real tech project with generative AI tools like Codex and Claude: you direct, the AI executes.',
+    images: [
+      { src: '/events/gdg-uj-1.webp', srcSet: '/events/gdg-uj-1-700.webp 700w, /events/gdg-uj-1.webp 1400w', w: 1400, h: 1053, alt: 'A presenter in a white thobe speaks beside a large screen showing Arabic calligraphy, facing a seated audience' },
+      { src: '/events/gdg-uj-2.webp', srcSet: '/events/gdg-uj-2-700.webp 700w, /events/gdg-uj-2.webp 1400w', w: 1400, h: 933, alt: 'Attendees seated at tables with laptops, watching the session' },
+      { src: '/events/gdg-uj-3.webp', srcSet: '/events/gdg-uj-3-700.webp 700w, /events/gdg-uj-3.webp 1400w', w: 1400, h: 765, alt: 'Screenshot of a web project titled Sky Soarer: a low-poly bird flying over islands and water' },
+      { src: '/events/gdg-uj-4.webp', srcSet: '/events/gdg-uj-4-700.webp 700w, /events/gdg-uj-4.webp 1400w', w: 1400, h: 994, alt: 'Certificate of attendance for You Direct | AI Executes, Google Developer Group on Campus, University of Jeddah' },
     ],
   },
   { title: 'More stops soon' },
@@ -234,7 +250,7 @@ const Leg = ({ className, place, children }) => (
 // One event as an open spread: no card, photos beside the text on lg, above it on phones.
 const Stop = ({ e }) => {
   const id = useId()
-  const [main, second] = e.images ?? []
+  const [main, ...rest] = e.images ?? []
   const meta = [e.date, e.place, e.organizer].filter(Boolean).join(' · ')
   // the end stop mirrors the heading: it fills the right column, and its extra margin pushes the
   // previous spread off-screen, so the left column can fade back in over empty space
@@ -248,9 +264,13 @@ const Stop = ({ e }) => {
       >
         {meta && <p className="col-span-full font-mono text-xs uppercase tracking-wider text-slate-500">{meta}</p>}
         {main && (
-          <div className={`relative ${second ? 'mr-4 mb-8' : ''}`}>
+          <div className={`relative ${rest.length ? 'mr-4 mb-8' : ''}`}>
             <Photo img={main} className="w-full" />
-            {second && <Photo img={second} className="absolute -right-4 -bottom-8 w-2/5 ring-4 ring-white" />}
+            {rest.length > 0 && (
+              <div className={`absolute -right-4 -bottom-8 flex gap-2 ${rest.length > 1 ? 'w-[85%]' : 'w-2/5'}`}>
+                {rest.map((img, i) => <Photo key={i} img={img} className="min-w-0 flex-1 ring-4 ring-white" />)}
+              </div>
+            )}
           </div>
         )}
         <div>
