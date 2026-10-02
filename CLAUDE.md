@@ -81,8 +81,8 @@ public/
   apple-touch-icon.png  180px
   me.webp me-200.webp   hero photo (400px / 200px)
   cdg/                  poster.webp (1400w) + poster-700/-500.webp, team-toronto.webp, team-kaust.webp
-                        (the events section reuses these files — don't copy them)
-  events/               event photos, <slug>-<n>.webp (+ -700 variant), e.g. gdg-uj-1…4 — see §5
+                        (/cdg's own; the events section uses public/events/ only)
+  events/               event photos, <slug>-<n>.webp (+ -700 variant), gdg-uj-1…4, kaust-1…3 — see §5
   robots.txt
 photo-source/           original uncropped photos — gitignored, never published
 ```
@@ -354,6 +354,12 @@ numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 �
   then replace the stop's `{ placeholder: true }` with
   `{ src: '/events/<slug>-<n>.webp', srcSet: '/events/<slug>-<n>-700.webp 700w, /events/<slug>-<n>.webp 1400w', w, h, alt }`.
   Images are 4:3 `object-cover` (focus 50% 60%), lazy, with width/height set.
+  **One folder per event:** all of an event's originals live together in `photo-source/events/<slug>/`
+  (gdg-uj, kaust). The KAUST folder also holds a copy of the original behind `/cdg/team-kaust.webp`
+  (`team-kaust-original.jpeg`); `/cdg` still uses its own file, and the events stop uses
+  `kaust-2.webp`, exported from that copy, so the photo is published twice on purpose — one per
+  page. If a photo's subject sits near an edge, crop the source band at export so both the 4:3 and
+  the short-phone 2:1 crops keep it (kaust-3, the "I love KAUST" sign, is a 1206×804 band).
   Exports so far were made with the already-installed ImageMagick (no npm dependency):
   `magick <in> -auto-orient -strip -resize '1400x>' -quality 78 <out>.webp` (and `'700x>'` for the
   variant); `-strip` removes EXIF/GPS (check with `webpinfo`: only a `VP8` chunk). macOS screenshot

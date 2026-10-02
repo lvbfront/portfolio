@@ -131,14 +131,16 @@ const events = [
   },
   {
     title: 'KAUST Academy Showcase',
+    wide: true,
     stop: 'Toronto → KAUST',
     label: 'KAUST Academy · AI Specialization',
     date: '',
     place: 'KAUST',
     line: 'Presented the same research again at the KAUST Academy showcase.',
     images: [
-      { src: '/cdg/team-kaust.webp', w: 1000, h: 1333, alt: 'Presenting the poster at the KAUST Academy showcase' },
-      { placeholder: true },
+      { src: '/events/kaust-1.webp', srcSet: '/events/kaust-1-700.webp 700w, /events/kaust-1.webp 1400w', w: 1400, h: 936, alt: 'A large auditorium full of seated attendees, with the KAUST Academy logo on the wall' },
+      { src: '/events/kaust-2.webp', srcSet: '/events/kaust-2-700.webp 700w, /events/kaust-2.webp 1200w', w: 1200, h: 1600, alt: 'Presenting the poster at the KAUST Academy showcase' },
+      { src: '/events/kaust-3.webp', srcSet: '/events/kaust-3-700.webp 700w, /events/kaust-3.webp 1206w', w: 1206, h: 804, alt: 'A colourful "I love KAUST" sign on a waterfront promenade' },
     ],
   },
   {
