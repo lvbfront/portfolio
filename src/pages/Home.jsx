@@ -92,7 +92,7 @@ const projects = [
 
 // Events & Competitions: one panel per stop on the route. Only `title` is required; every other
 // field renders only when present. `images` (1–4): { src, w, h, alt, srcSet? } or { placeholder: true };
-// the first is the main photo, the rest sit smaller along its bottom-right corner.
+// the first is the main photo; one more sits smaller on its corner, two or three form a row under it.
 // `wide` makes the panel span two; `stop` overrides the city label under its dot on the route.
 const events = [
   {
@@ -143,16 +143,18 @@ const events = [
   },
   {
     title: 'You Direct | AI Executes',
+    wide: true,
     label: 'Workshop',
     date: '26 Sep 2026',
     place: 'Wadi Jeddah',
     stop: 'Jeddah',
     organizer: 'GDG On Campus | UJ',
-    line: 'A workshop on turning an idea into a real tech project with generative AI tools like Codex and Claude: you direct, the AI executes.',
+    line: 'A workshop on turning an idea into a real tech project with generative AI tools like Codex and Claude: you direct, the AI executes. I built parts of Sky Soarer there.',
+    link: { label: 'Sky Soarer →', href: 'https://github.com/lvbfront/Sky-Soarer' },
     images: [
       { src: '/events/gdg-uj-1.webp', srcSet: '/events/gdg-uj-1-700.webp 700w, /events/gdg-uj-1.webp 1400w', w: 1400, h: 1053, alt: 'A presenter in a white thobe speaks beside a large screen showing Arabic calligraphy, facing a seated audience' },
       { src: '/events/gdg-uj-2.webp', srcSet: '/events/gdg-uj-2-700.webp 700w, /events/gdg-uj-2.webp 1400w', w: 1400, h: 933, alt: 'Attendees seated at tables with laptops, watching the session' },
-      { src: '/events/gdg-uj-3.webp', srcSet: '/events/gdg-uj-3-700.webp 700w, /events/gdg-uj-3.webp 1400w', w: 1400, h: 765, alt: 'Screenshot of a web project titled Sky Soarer: a low-poly bird flying over islands and water' },
+      { src: '/events/gdg-uj-3.webp', srcSet: '/events/gdg-uj-3-700.webp 700w, /events/gdg-uj-3.webp 1400w', w: 1400, h: 765, alt: 'Screenshot of Sky Soarer, my web game: a low-poly bird flying over islands and water' },
       { src: '/events/gdg-uj-4.webp', srcSet: '/events/gdg-uj-4-700.webp 700w, /events/gdg-uj-4.webp 1400w', w: 1400, h: 994, alt: 'Certificate of attendance for You Direct | AI Executes, Google Developer Group on Campus, University of Jeddah' },
     ],
   },
@@ -251,6 +253,7 @@ const Leg = ({ className, place, children }) => (
 const Stop = ({ e }) => {
   const id = useId()
   const [main, ...rest] = e.images ?? []
+  const row = rest.length > 1 // photo row: under the main photo on phones, straddling its bottom edge on lg
   const meta = [e.date, e.place, e.organizer].filter(Boolean).join(' · ')
   // the end stop mirrors the heading: it fills the right column, and its extra margin pushes the
   // previous spread off-screen, so the left column can fade back in over empty space
@@ -260,27 +263,27 @@ const Stop = ({ e }) => {
       <article
         tabIndex={0}
         aria-labelledby={id}
-        className={`my-auto grid gap-5 rounded-2xl ${main ? 'lg:grid-cols-[1.2fr_1fr] lg:items-center lg:gap-x-12' : 'text-center'}`}
+        className={`my-auto grid gap-5 rounded-2xl ${main ? `${row ? 'lg:grid-cols-[1.7fr_1fr]' : 'lg:grid-cols-[1.2fr_1fr]'} lg:items-center lg:gap-x-12` : 'text-center'}`}
       >
         {meta && <p className="col-span-full font-mono text-xs uppercase tracking-wider text-slate-500">{meta}</p>}
         {main && (
-          <div className={`relative ${rest.length ? 'mr-4 mb-8' : ''}`}>
+          <div className={`relative ${row ? 'lg:mr-4 lg:mb-[12%]' : rest.length ? 'mr-4 mb-8' : ''}`}>
             <Photo img={main} className="w-full" />
             {rest.length > 0 && (
-              <div className={`absolute -right-4 -bottom-8 flex gap-2 ${rest.length > 1 ? 'w-[85%]' : 'w-2/5'}`}>
+              <div className={`flex gap-2 ${row ? 'mt-2 lg:absolute lg:-right-4 lg:bottom-0 lg:left-8 lg:mt-0 lg:translate-y-1/2' : 'absolute -right-4 -bottom-8 w-2/5'}`}>
                 {rest.map((img, i) => <Photo key={i} img={img} className="min-w-0 flex-1 ring-4 ring-white" />)}
               </div>
             )}
           </div>
         )}
-        <div>
+        <div className={row ? 'max-lg:-mt-2' : undefined}>
           {e.label && <p className="mb-2 font-mono text-xs uppercase tracking-wider text-sky-700">{e.label}</p>}
           <h3 id={id} className={main ? 'text-2xl font-bold text-slate-800 lg:text-4xl' : 'text-3xl font-medium text-slate-500 lg:text-5xl'}>{e.title}</h3>
           {e.result && <p className="mt-3"><span className="inline-block rounded-full bg-sky-700 px-3 py-1 text-sm font-semibold text-white">{e.result}</span></p>}
           {e.project && <p className="mt-3 font-semibold text-slate-800 lg:text-lg">{e.project}</p>}
           {e.line && <p className="mt-1 leading-relaxed lg:text-xl">{e.line}</p>}
           {e.tags && <ul className="tags mt-4 flex flex-wrap gap-2" aria-label="Technologies">{e.tags.map((t, i) => <Tag key={t} i={i}>{t}</Tag>)}</ul>}
-          {e.link && <a href={e.link.href} className="mt-4 inline-block font-semibold text-sky-700 hover:underline lg:text-lg">{e.link.label}</a>}
+          {e.link && <a href={e.link.href} target={e.link.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="mt-4 inline-block font-semibold text-sky-700 hover:underline lg:text-lg">{e.link.label}</a>}
         </div>
       </article>
     </Leg>
