@@ -140,7 +140,7 @@ const events = [
     images: [
       { src: '/events/kaust-1.webp', srcSet: '/events/kaust-1-700.webp 700w, /events/kaust-1.webp 1400w', w: 1400, h: 936, alt: 'A large auditorium full of seated attendees, with the KAUST Academy logo on the wall' },
       { src: '/events/kaust-2.webp', srcSet: '/events/kaust-2-700.webp 700w, /events/kaust-2.webp 1200w', w: 1200, h: 1600, alt: 'Presenting the poster at the KAUST Academy showcase' },
-      { src: '/events/kaust-3.webp', srcSet: '/events/kaust-3-700.webp 700w, /events/kaust-3.webp 1206w', w: 1206, h: 804, alt: 'A colourful "I love KAUST" sign on a waterfront promenade' },
+      { src: '/events/kaust-3.webp', srcSet: '/events/kaust-3-700.webp 700w, /events/kaust-3.webp 1206w', w: 1206, h: 906, alt: 'A colourful "I love KAUST" sign on a waterfront promenade' },
     ],
   },
   {
