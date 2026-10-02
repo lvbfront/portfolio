@@ -91,7 +91,8 @@ const projects = [
 ]
 
 // Events & Competitions: one panel per stop on the route. Only `title` is required; every other
-// field renders only when present. `images` (1–4): { src, w, h, alt, srcSet? } or { placeholder: true };
+// field renders only when present. `images` (1–4): { src, w, h, alt, srcSet?, pos? } or { placeholder: true };
+// `pos` replaces the default crop focus (an object-position class) for a photo whose subject sits on an edge;
 // the first is the main photo; one more sits smaller on its corner, two or three form a row under it.
 // `wide` makes the panel span two; `stop` overrides the city label under its dot on the route.
 const events = [
@@ -138,7 +139,7 @@ const events = [
     place: 'KAUST',
     line: 'Presented the same research again at the KAUST Academy showcase.',
     images: [
-      { src: '/events/kaust-1.webp', srcSet: '/events/kaust-1-700.webp 700w, /events/kaust-1.webp 1400w', w: 1400, h: 936, alt: 'A large auditorium full of seated attendees, with the KAUST Academy logo on the wall' },
+      { src: '/events/kaust-1.webp', srcSet: '/events/kaust-1-700.webp 700w, /events/kaust-1.webp 1400w', w: 1400, h: 936, pos: 'object-right-top', alt: 'A large auditorium full of seated attendees, with the KAUST Academy logo on the wall' },
       { src: '/events/kaust-2.webp', srcSet: '/events/kaust-2-700.webp 700w, /events/kaust-2.webp 1200w', w: 1200, h: 1600, alt: 'Presenting the poster at the KAUST Academy showcase' },
       { src: '/events/kaust-3.webp', srcSet: '/events/kaust-3-700.webp 700w, /events/kaust-3.webp 1206w', w: 1206, h: 906, alt: 'A colourful "I love KAUST" sign on a waterfront promenade' },
     ],
@@ -235,7 +236,7 @@ const Photo = ({ img, className = '' }) => img.placeholder ? (
   <img
     src={img.src} srcSet={img.srcSet} sizes={img.srcSet && '(min-width: 1024px) 40vw, 90vw'} alt={img.alt}
     width={img.w} height={img.h} loading="lazy"
-    className={`aspect-[4/3] short:aspect-[2/1] rounded-xl object-cover object-[50%_60%] short:object-[50%_45%] ${className}`}
+    className={`aspect-[4/3] short:aspect-[2/1] rounded-xl object-cover ${img.pos ?? 'object-[50%_60%] short:object-[50%_45%]'} ${className}`}
   />
 )
 

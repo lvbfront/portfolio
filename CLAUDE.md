@@ -291,7 +291,10 @@ numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 �
   the photos), `label` (mono kicker), `result` (badge), `project`, `line`, `tags`,
   `link: { label, href }`, `images`, `wide` (a wider spread on `lg`), `stop` (overrides the city
   label under the dot, e.g. `Toronto → KAUST`). `images` holds 1–4 entries:
-  `{ src, w, h, alt, srcSet? }` or `{ placeholder: true }`. The first is the main photo (full width,
+  `{ src, w, h, alt, srcSet?, pos? }` or `{ placeholder: true }`. `pos` is an object-position class
+  that replaces the default crop focus for a photo whose subject sits on an edge (kaust-1 uses
+  `object-right-top`: the logo is in its top-right corner, so 4:3 slots trim the left and 2:1 slots
+  trim the bottom seats). The first is the main photo (full width,
   4:3). **One extra** sits smaller (`w-2/5`) offset over its bottom-right corner. **Two or three
   extras** (`row` in `Stop`) form a row of equal 4:3 photos (white ring), each ≈⅓ of the main
   photo: on phones a plain row under it (no overlap, and the gap above the text is 8px shorter so
