@@ -298,7 +298,15 @@ numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 �
   it fits 360×740), on `lg` straddling its bottom edge (`translate-y-1/2`, `mb-[12%]` reserves the
   overhang); the spread's photo column also gets more of the width (`1.7fr` vs `1.2fr`). Use
   `wide: true` with a photo row. Pick the main photo so the row doesn't cover anyone's head.
-  `link` hrefs starting with `http` open in a new tab. Placeholder plates are pure CSS (sky gradient, camera icon, "Photo coming
+  `link` hrefs starting with `http` open in a new tab.
+- **Short phones — the `short` variant** (`@custom-variant` in `index.css`: below `lg` and
+  `max-height: 760px`, e.g. iPhone SE 375×667, 360×740). There a phone leaves only ~520–600px above
+  the route, and the tallest spreads (X-thon, GDG) used to push their dot and city label below the
+  stage. Under `short`, in this order: photos go 2:1 (focus 50% 45% so heads stay in frame), the
+  spread's row gap 20→12px, then the title `text-xl` and the description 15px `leading-snug`. The
+  description and link are never cut. Tall phones and desktop are pixel-identical (every `short:`
+  rule sits inside that media query). Headroom: X-thon 510/523px at 375×667. A longer description
+  on a stop may need re-checking at 375×667 — every spread plus its dot must fit. Placeholder plates are pure CSS (sky gradient, camera icon, "Photo coming
   soon"). Visionthon's `line` reads the Recyclable Materials Classifier project's description, so
   the two stay in sync. A stop with no images is the end spread.
 - **Structure:** a wrapper (`--dist` + one stage height tall) holding a **CSS `position: sticky`**
@@ -464,10 +472,6 @@ travelling mascot. (Remaining suspects if it is ever revisited: the five sticky 
 - `.DS_Store` files exist locally (gitignored).
 - **Prose on `/cdg` was written by Claude from the owner's brief** and describes real research —
   it should be re-read by the owner whenever it changes.
-- **X-thon's route dot is clipped at 360×740:** its open spread is 656px tall, more than the
-  ~596px a 740px-tall phone leaves above the route, so its dot and `TABUK` label fall below the stage
-  (the spread's text itself is not clipped). Pre-existing since the open-layout change. Fix when
-  wanted: shorter description or smaller type for that stop on short phones.
 - iPhone scroll smoothness is not fully verified from this machine; all numbers are Chrome +
   CPU throttling. This includes the `/cdg` scroll story, the Home events track, and iOS
   address-bar show/hide behaviour.

@@ -223,7 +223,7 @@ const loadGsap = () => (gsapReady ??= Promise.all([import('gsap'), import('gsap/
 const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })))
 
 const Photo = ({ img, className = '' }) => img.placeholder ? (
-  <div className={`grid aspect-[4/3] place-content-center justify-items-center gap-2 rounded-xl bg-linear-to-br from-sky-50 to-sky-200 text-sky-700 ${className}`}>
+  <div className={`grid aspect-[4/3] short:aspect-[2/1] place-content-center justify-items-center gap-2 rounded-xl bg-linear-to-br from-sky-50 to-sky-200 text-sky-700 ${className}`}>
     <svg aria-hidden="true" viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
       <path d="M3 8h4l2-3h6l2 3h4v11H3Z" /><circle cx="12" cy="13" r="3.5" />
     </svg>
@@ -233,7 +233,7 @@ const Photo = ({ img, className = '' }) => img.placeholder ? (
   <img
     src={img.src} srcSet={img.srcSet} sizes={img.srcSet && '(min-width: 1024px) 40vw, 90vw'} alt={img.alt}
     width={img.w} height={img.h} loading="lazy"
-    className={`aspect-[4/3] rounded-xl object-cover object-[50%_60%] ${className}`}
+    className={`aspect-[4/3] short:aspect-[2/1] rounded-xl object-cover object-[50%_60%] short:object-[50%_45%] ${className}`}
   />
 )
 
@@ -263,7 +263,7 @@ const Stop = ({ e }) => {
       <article
         tabIndex={0}
         aria-labelledby={id}
-        className={`my-auto grid gap-5 rounded-2xl ${main ? `${row ? 'lg:grid-cols-[1.7fr_1fr]' : 'lg:grid-cols-[1.2fr_1fr]'} lg:items-center lg:gap-x-12` : 'text-center'}`}
+        className={`my-auto grid gap-5 short:gap-3 rounded-2xl ${main ? `${row ? 'lg:grid-cols-[1.7fr_1fr]' : 'lg:grid-cols-[1.2fr_1fr]'} lg:items-center lg:gap-x-12` : 'text-center'}`}
       >
         {meta && <p className="col-span-full font-mono text-xs uppercase tracking-wider text-slate-500">{meta}</p>}
         {main && (
@@ -278,10 +278,10 @@ const Stop = ({ e }) => {
         )}
         <div className={row ? 'max-lg:-mt-2' : undefined}>
           {e.label && <p className="mb-2 font-mono text-xs uppercase tracking-wider text-sky-700">{e.label}</p>}
-          <h3 id={id} className={main ? 'text-2xl font-bold text-slate-800 lg:text-4xl' : 'text-3xl font-medium text-slate-500 lg:text-5xl'}>{e.title}</h3>
+          <h3 id={id} className={main ? 'text-2xl font-bold text-slate-800 short:text-xl lg:text-4xl' : 'text-3xl font-medium text-slate-500 lg:text-5xl'}>{e.title}</h3>
           {e.result && <p className="mt-3"><span className="inline-block rounded-full bg-sky-700 px-3 py-1 text-sm font-semibold text-white">{e.result}</span></p>}
           {e.project && <p className="mt-3 font-semibold text-slate-800 lg:text-lg">{e.project}</p>}
-          {e.line && <p className="mt-1 leading-relaxed lg:text-xl">{e.line}</p>}
+          {e.line && <p className="mt-1 leading-relaxed short:text-[15px] short:leading-snug lg:text-xl">{e.line}</p>}
           {e.tags && <ul className="tags mt-4 flex flex-wrap gap-2" aria-label="Technologies">{e.tags.map((t, i) => <Tag key={t} i={i}>{t}</Tag>)}</ul>}
           {e.link && <a href={e.link.href} target={e.link.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="mt-4 inline-block font-semibold text-sky-700 hover:underline lg:text-lg">{e.link.label}</a>}
         </div>
