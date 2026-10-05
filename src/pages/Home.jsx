@@ -409,7 +409,9 @@ const DEPTH = 50 // metres at the bottom of the water, for the depth meter
 const depthOf = (i) => 0.18 + (0.66 * i) / Math.max(projects.length - 1, 1) // each fish a little deeper
 const fishX = [-32, 5, -24, 8, -36, 3] // fish mouth, in % of the water's width from the line
 const fishColor = ['#0369a1', '#0284c7', '#0ea5e9', '#38bdf8', '#7dd3fc', '#bae6fd']
-const STEP = 4.7 // timeline time per project: drop 1, bite 0.4, reel 1, catch 0.5, hold 1.6, release 0.5 (overlaps the next drop)
+// timeline time per project: drop 0.8, bite 0.4, reel 0.8, catch 0.4, hold 3, release 0.4 (overlaps the next drop).
+// No snapping: the long flat hold is what lets a scroll that stops near a catch rest on its card.
+const STEP = 5.6
 
 // Facing left, mouth at x = 0.
 const Fish = ({ color, className = '' }) => (
@@ -440,21 +442,24 @@ function catchTimeline(gsap, root, scrollTrigger) {
 
   projects.forEach((_, i) => {
     const t = i * STEP, f = depthOf(i)
-    const fish = q(`[data-fish="${i}"]`), pos = q(`[data-fish="${i}"] [data-pos]`)
-    sink(f, t) // 1. the line drops
-    tl.to(q('[data-rig]'), { keyframes: { x: [5, -4, 0] }, duration: 0.4 }, t + 1) // 2. the bite: one tug
-      .to(q(`[data-fish="${i}"] [data-ring]`), { keyframes: { opacity: [0.9, 0], scale: [1.2, 2] }, duration: 0.5 }, t + 1)
-      .to(q(`[data-fish="${i}"] [data-tag]`), { opacity: 0, duration: 0.2 }, t + 1)
-      .to(fish, { xPercent: -fishX[i], duration: 0.4, ease: 'power2.out' }, t + 1)
-      .to(pos, { rotation: 70, duration: 0.4 }, t + 1)
-    sink(0, t + 1.4) // 3. the reel: the fish rises with the hook
-    tl.to(fish, { yPercent: -f * 100, duration: 1, ease: 'power1.inOut' }, t + 1.4)
-      .to(pos, { opacity: 0, scale: 1.6, duration: 0.4 }, t + 2.4) // 4. the catch: fish → card
-      .to(q('[data-card]')[i], { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: 'power2.out' }, t + 2.4)
-      .set(glad, { attr: { 'data-glad': 1 } }, t + 2.4)
-      .addLabel(`catch${i}`, t + 2.9)
-      .to(q('[data-card]')[i], { opacity: 0, x: -60, duration: 0.5, ease: 'power1.in' }, t + 4.5) // 5. release
-      .set(glad, { attr: { 'data-glad': 0 } }, t + 4.5)
+    const fish = q(`[data-fish="${i}"]`), pos = q(`[data-fish="${i}"] [data-pos]`), card = q('[data-card]')[i]
+    sink(f, t, 0.8) // 1. the line drops
+    tl.to(q('[data-rig]'), { keyframes: { x: [5, -4, 0] }, duration: 0.4 }, t + 0.8) // 2. the bite: one tug
+      .to(q(`[data-fish="${i}"] [data-ring]`), { keyframes: { opacity: [0.9, 0], scale: [1.2, 2] }, duration: 0.5 }, t + 0.8)
+      .to(q(`[data-fish="${i}"] [data-tag]`), { opacity: 0, duration: 0.2 }, t + 0.8)
+      .to(fish, { xPercent: -fishX[i], duration: 0.4, ease: 'power2.out' }, t + 0.8)
+      .to(pos, { rotation: 70, duration: 0.4 }, t + 0.8)
+    sink(0, t + 1.2, 0.8) // 3. the reel: the fish rises with the hook
+    tl.to(fish, { yPercent: -f * 100, duration: 0.8, ease: 'power1.inOut' }, t + 1.2)
+      .to(pos, { opacity: 0, scale: 1.6, duration: 0.4 }, t + 2) // 4. the catch: fish → card
+      .to(card, { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: 'power2.out' }, t + 2)
+      // the shown card is the only one that takes the pointer (its <li> and the others are pointer-events: none)
+      .set(card, { pointerEvents: 'auto' }, t + 2)
+      .set(glad, { attr: { 'data-glad': 1 } }, t + 2)
+      .addLabel(`catch${i}`, t + 3.9) // the middle of the 3-unit hold
+      .set(card, { pointerEvents: 'none' }, t + 5.4)
+      .to(card, { opacity: 0, x: -60, duration: 0.4, ease: 'power1.in' }, t + 5.4) // 5. release
+      .set(glad, { attr: { 'data-glad': 0 } }, t + 5.4)
   })
   const t = projects.length * STEP + 0.3 // end beat: the line rests, a quiet line of text
   sink(0.1, t, 0.6)
@@ -483,17 +488,13 @@ function Catch() {
         if (dead) return
         mm = gsap.matchMedia(w)
         // one of motion/reduce always matches — gsap.matchMedia skips the callback when none does
-        mm.add({ desktop: '(min-width: 1024px)', motion: '(prefers-reduced-motion: no-preference)', reduce: '(prefers-reduced-motion: reduce)' }, ({ conditions }) => {
+        mm.add({ motion: '(prefers-reduced-motion: no-preference)', reduce: '(prefers-reduced-motion: reduce)' }, ({ conditions }) => {
           if (conditions.reduce) {
             if (pick) w.querySelectorAll('[data-card]')[pick - 1].scrollIntoView({ block: 'center', behavior: 'instant' })
             return
           }
-          const tl = timeline.current = catchTimeline(gsap, w, {
-            trigger: w, start: 'top top', end: 'bottom bottom', scrub: 0.5,
-            // phones rely on the holds: snapping fights a flicking thumb. No inertia, or a Tab jump
-            // (instant scroll = huge velocity) would be projected several catches further.
-            snap: conditions.desktop && { snapTo: 'labelsDirectional', inertia: false, duration: { min: 0.2, max: 0.5 }, delay: 0.1, ease: 'power1.inOut' },
-          })
+          // no snap on any size: with trackpad momentum it carried the page on to the next project
+          const tl = timeline.current = catchTimeline(gsap, w, { trigger: w, start: 'top top', end: 'bottom bottom', scrub: 0.5 })
           let live = true
           Promise.all([document.fonts.ready, loaded]).then(() => {
             if (!live) return
@@ -519,17 +520,17 @@ function Catch() {
   const onFocus = (e) => {
     const i = [...e.currentTarget.children].indexOf(e.target.closest('li'))
     const st = timeline.current?.scrollTrigger
-    if (i >= 0 && st) scrollTo({ top: st.labelToScroll(`catch${i}`), behavior: 'instant' }) // smooth would race the desktop snap
+    if (i >= 0 && st) scrollTo({ top: st.labelToScroll(`catch${i}`), behavior: 'instant' })
   }
 
   return (
-    <div ref={wrap} style={{ '--n': projects.length }} className="h-[calc(var(--n)*80svh)] lg:h-[calc(var(--n)*65svh)] motion-reduce:h-auto">
+    <div ref={wrap} style={{ '--n': projects.length }} className="h-[calc(var(--n)*80svh)] lg:h-[calc(var(--n)*70svh)] motion-reduce:h-auto">
       <div className="catch sticky top-(--bar-h) -mx-6 flex h-[calc(100svh-var(--bar-h))] flex-col pt-4 [--lx:58%] md:-mx-12 lg:top-0 lg:mx-0 lg:h-svh lg:py-10 motion-reduce:static motion-reduce:h-auto">
         {/* above the water: the cards surface here, one at a time (all in one grid cell) */}
         <div className="relative px-6 pb-4 md:px-12 lg:px-0 motion-reduce:order-last motion-reduce:pt-8 motion-reduce:pb-0">
           <ol onFocus={onFocus} className="grid items-end motion-reduce:block motion-reduce:space-y-5">
             {projects.map((p, i) => (
-              <li key={p.title} className="[grid-area:1/1]">
+              <li key={p.title} className="[grid-area:1/1] motion-safe:pointer-events-none">
                 <article
                   data-card
                   tabIndex={p.href ? undefined : 0}
@@ -554,7 +555,7 @@ function Catch() {
         </div>
 
         {/* the boat on the waterline: Blob, rod, and the line from the rod tip to the water */}
-        <div aria-hidden="true" className="relative z-10 h-16 flex-none">
+        <div aria-hidden="true" className="pointer-events-none relative z-10 h-16 flex-none">
           <span data-glad="0" className="catch-blob absolute bottom-2 left-[calc(var(--lx)-106px)]"><Blob className="blob-react" size={36} /></span>
           <svg viewBox="0 0 70 44" width="70" height="44" className="absolute bottom-3.5 left-[calc(var(--lx)-70px)] overflow-visible" fill="none" stroke="#334155" strokeLinecap="round">
             <path d="M0 40 69 2" strokeWidth="2" /><circle cx="9" cy="35" r="3" strokeWidth="1.5" />
@@ -566,7 +567,7 @@ function Catch() {
         </div>
 
         {/* underwater */}
-        <div aria-hidden="true" className="relative min-h-40 flex-1 overflow-clip bg-linear-to-b from-sky-100 to-sky-700 lg:rounded-b-2xl motion-reduce:h-56 motion-reduce:flex-none">
+        <div aria-hidden="true" className="pointer-events-none relative min-h-40 flex-1 overflow-clip bg-linear-to-b from-sky-100 to-sky-700 lg:rounded-b-2xl motion-reduce:h-56 motion-reduce:flex-none">
           <svg viewBox="0 0 200 8" preserveAspectRatio="none" className="catch-wave absolute -top-1 left-0 h-2 w-[200%]">
             <path d="M0 4q6.25-4 12.5 0t12.5 0 12.5 0 12.5 0 12.5 0 12.5 0 12.5 0 12.5 0 12.5 0 12.5 0 12.5 0 12.5 0 12.5 0 12.5 0 12.5 0 12.5 0" fill="none" stroke="#38bdf8" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
           </svg>

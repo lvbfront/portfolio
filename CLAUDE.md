@@ -196,25 +196,37 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
   line, drifting (`.catch-drift`) with a white label, and a `DEPTH 0 m` meter (bottom-left, white
   mono). **Every position is a percentage of the water**, so the timeline uses `yPercent`/`xPercent`
   /`scaleY` on `inset: 0` layers and nothing is measured.
-- **Story per project** (`STEP` = 4.7 timeline units): drop (hook layer `yPercent` + line `scaleY`
-  to the fish's depth) → bite (the rig shakes once, a splash ring, the fish moves onto the line and
-  turns nose-up, its label fades) → reel (hook, line and fish rise together to 0) → catch (fish
-  scales/fades out, the card fades/scales in; label `catchN`; the Blob shows happy eyes) → hold 1.6
-  (the longest) → release (card slides left and fades; the next drop overlaps). End beat: the line
+- **Story per project** (`STEP` = 5.6 timeline units, total 35.3): drop 0.8 (hook layer `yPercent` +
+  line `scaleY` to the fish's depth) → bite 0.4 (the rig shakes once, a splash ring, the fish moves
+  onto the line and turns nose-up, its label fades) → reel 0.8 (hook, line and fish rise together to
+  0) → catch 0.4 (fish scales/fades out, the card fades/scales in; the Blob shows happy eyes) → **hold
+  3** (over half of each project's scroll; label `catchN` sits in its middle) → release 0.4 (card
+  slides left and fades; the next drop overlaps by 0.2). End beat: the line
   rests at 10% and "That's the catch for now." fades in (label `end`).
 - **Happy at the catch:** the timeline sets `data-glad="1"` on `.catch-blob` (an `attr` set, so it
   reverses with scroll); a scoped rule in `index.css` shows `.eyes-happy` there. Otherwise the Blob
   follows `data-mood` as usual. `Blob.jsx` and its rules are untouched.
 - **Depth meter:** the timeline's `onUpdate` reads the hook's `yPercent` and writes `DEPTH n m`
   (`DEPTH` = 50 m at the bottom) only when the number changes. No React state.
-- **Mechanics:** wrapper `--n` (projects) × `80svh` (`65svh` at `lg`), CSS-sticky stage (`top:
+- **Mechanics:** wrapper `--n` (projects) × `80svh` (`70svh` at `lg`), CSS-sticky stage (`top:
   var(--bar-h)`, `calc(100svh - var(--bar-h))` below `lg`; `top: 0`, `100svh` at `lg`), full-bleed on
   phones (`-mx-6`), inside the right column on `lg` (not a full-screen chapter: the left column stays,
   scroll-spy keeps Projects active). The section has **no `.reveal`** (its transform would skew
   ScrollTrigger). One `gsap.matchMedia()` (`desktop`/`motion`/`reduce`, one of the last two always
-  matches) with one timeline on one ScrollTrigger (`top top` → `bottom bottom`, `scrub: 0.5`);
-  `labelsDirectional` snap on `lg` only, with **`inertia: false`** — with inertia, a Tab jump
-  (instant scroll = huge velocity) was projected several catches further. Reverted on unmount.
+  matches) with one timeline on one ScrollTrigger (`top top` → `bottom bottom`, `scrub: 0.5`).
+  **No snapping, on any size — don't add it back.** On a laptop trackpad the desktop snap
+  (`labelsDirectional`) took the momentum of a scroll that had stopped at a catch and carried the
+  page on to the next project (reproduced with decaying wheel deltas: 336 px of input moved the page
+  ~670 px). The long flat hold does the job instead: wherever a scroll stops inside it, that card is
+  fully shown and the page stays put (checked at 3 spots in each of the 6 holds at 1366×768 and
+  390×844, wheel input, scroll position unchanged 2.5 s later). Wrapper `80svh`/`70svh` per project
+  gives a hold of ≈270 px on a 390×844 phone and ≈210 px at 1366×768. Reverted on unmount.
+- **Pointer:** all cards share one grid cell, so the *last* card in the DOM (pgai, opacity 0) used
+  to sit on top and swallow clicks on the shown card's link (a JS `.click()` test hid this — test
+  with a real `mouse.click` at the link's position). Now each `<li>` is `pointer-events: none`
+  (`motion-safe:`), and the timeline `set`s `pointerEvents: auto` on a card at its catch and back
+  to `none` at its release; the boat row and the water are `pointer-events: none` too. Reduced
+  motion keeps normal pointer events (it's a plain list).
   `ScrollTrigger.refresh()` after fonts + `load`. GSAP comes from the shared `loadGsap()`.
 - **Before GSAP:** the pre-GSAP DOM is the timeline's start state (cards `motion-safe:opacity-0`,
   line `scaleY(0)`, hook at the surface, fish idle), so there is no jump when it takes over.
@@ -232,7 +244,9 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
   text never does. A longer description needs re-checking at 375×667.
 - **QA helper:** `#/?catch=N` (N = 1–6) scrolls to project N's catch and freezes it (disables the
   trigger, pauses at `catch{N-1}`); under reduced motion it scrolls that card into view. Inert
-  without the query; the router treats `#/?…` as home.
+  without the query; the router treats `#/?…` as home. It runs on page load only: changing just
+  the hash (e.g. Playwright `goto` to another `#/?catch=`) is a same-document navigation and does
+  nothing — load `about:blank` first in scripts.
 
 ### Reveals
 - `useReveal()` (exported from `Shell.jsx`) fades in `.reveal` sections and staggers `.tags` items.
