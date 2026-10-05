@@ -5,8 +5,13 @@ import Home from './pages/Home.jsx'
 // Hash routing: no server rewrites needed, and in-page anchors (#about) still work because only
 // "#/..." counts as a route. The project page is lazy so it stays out of the homepage bundle.
 const Cdg = lazy(() => import('./pages/Cdg.jsx'))
+const SkySoarer = lazy(() => import('./pages/SkySoarer.jsx'))
 
-const routeOf = () => (location.hash.startsWith('#/cdg') ? 'cdg' : 'home')
+const pages = {
+  cdg: { Page: Cdg, title: 'ClinicalDenoiseGuard — Abdullah Bukhari' },
+  'sky-soarer': { Page: SkySoarer, title: 'Sky Soarer — Abdullah Bukhari' },
+}
+const routeOf = () => Object.keys(pages).find((r) => location.hash.startsWith(`#/${r}`)) ?? 'home'
 
 export default function App() {
   const [route, setRoute] = useState(routeOf)
@@ -24,16 +29,15 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    document.title = route === 'cdg'
-      ? 'ClinicalDenoiseGuard — Abdullah Bukhari'
-      : 'Abdullah Bukhari — AI Engineer'
+    document.title = pages[route]?.title ?? 'Abdullah Bukhari — AI Engineer'
   }, [route])
 
+  const Page = pages[route]?.Page
   return (
-    <Shell route={route} barTrigger={route === 'cdg' ? 160 : '.pc'}>
-      {route === 'cdg' ? (
+    <Shell route={route} barTrigger={Page ? 160 : '.pc'}>
+      {Page ? (
         <Suspense fallback={<div className="mx-auto max-w-3xl px-6 py-24 text-slate-500">Loading…</div>}>
-          <Cdg />
+          <Page />
         </Suspense>
       ) : (
         <Home />

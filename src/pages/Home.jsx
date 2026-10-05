@@ -66,6 +66,14 @@ const projects = [
     tags: ['PyTorch', 'LLMs', 'Interpretability', 'AI Safety'],
   },
   {
+    title: 'Sky Soarer',
+    badge: 'Game',
+    href: '#/sky-soarer',
+    description:
+      'A relaxing, endless 3D flight game: steer a low-poly bird with your bare hand in front of a webcam, tracked by MediaPipe Hands in the browser. Fully bilingual, English and Arabic.',
+    tags: ['Computer Vision', 'MediaPipe', 'three.js', 'React'],
+  },
+  {
     title: 'Recyclable Materials Classifier',
     badge: '1st Place',
     description: 'Image classification model for sorting recyclable materials; won 1st place in an AI competition.',
@@ -153,7 +161,7 @@ const events = [
     stop: 'Jeddah',
     organizer: 'GDG On Campus | UJ',
     line: 'A workshop on turning an idea into a real tech project with generative AI tools like Codex and Claude: you direct, the AI executes. I built parts of Sky Soarer there.',
-    link: { label: 'Sky Soarer →', href: 'https://github.com/lvbfront/Sky-Soarer' },
+    link: { label: 'Sky Soarer →', href: 'https://sky-soarer-3d-game.vercel.app/' },
     images: [
       { src: '/events/gdg-uj-1.webp', srcSet: '/events/gdg-uj-1-700.webp 700w, /events/gdg-uj-1.webp 1400w', w: 1400, h: 1053, alt: 'A presenter in a white thobe speaks beside a large screen showing Arabic calligraphy, facing a seated audience' },
       { src: '/events/gdg-uj-2.webp', srcSet: '/events/gdg-uj-2-700.webp 700w, /events/gdg-uj-2.webp 1400w', w: 1400, h: 933, alt: 'Attendees seated at tables with laptops, watching the session' },
