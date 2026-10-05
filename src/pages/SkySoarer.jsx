@@ -12,9 +12,8 @@ const motion = loaded.then(() => Promise.all([import('gsap'), import('gsap/Scrol
   ScrollTrigger.config({ ignoreMobileResize: true })
 })
 
-// Every fact on this page comes from the game repo's CLAUDE.md (github.com/lvbfront/Sky-Soarer);
+// Every fact on this page comes from the game repo's CLAUDE.md (a private repo: never link to it);
 // the section is noted next to each one. Re-check them there when the game changes.
-const REPO = 'https://github.com/lvbfront/Sky-Soarer'
 const PLAY_URL = 'https://sky-soarer-3d-game.vercel.app/' // the button renders only when this is set
 
 const tags = ['React', 'TypeScript', 'three.js', 'MediaPipe Hands', 'GSAP', 'Web Audio'] // §2
@@ -462,7 +461,6 @@ export default function SkySoarer() {
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
               {PLAY_URL && <a href={PLAY_URL} target="_blank" rel="noopener noreferrer" className={`${btn} bg-sky-700 text-white hover:bg-sky-800`}>Play it →</a>}
-              <a href={REPO} target="_blank" rel="noopener noreferrer" className={`${btn} border border-sky-200 bg-white text-sky-700 hover:border-sky-400`}>Source →</a>
             </div>
             <p className="mt-3 max-w-md text-sm text-slate-600">
               Best on a laptop or desktop with a webcam (or play with the keyboard). Phones show the game’s landing page only.
@@ -599,7 +597,7 @@ export default function SkySoarer() {
       <footer className="mt-24 lg:mt-32">
         <Hairline data-alt="5000" left="ALT 5,000 m — Above the clouds" />
         <div className="mt-6 flex flex-wrap items-baseline justify-between gap-4">
-          <a href={REPO} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-sky-700 hover:text-sky-600 hover:underline">Source on GitHub →</a>
+          {PLAY_URL && <a href={PLAY_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-sky-700 hover:text-sky-600 hover:underline">Play it →</a>}
           <a href="#/" className="text-sm font-semibold text-sky-700 hover:text-sky-600 hover:underline">← Back to home</a>
         </div>
       </footer>

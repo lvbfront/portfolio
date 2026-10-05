@@ -161,7 +161,7 @@ const events = [
     stop: 'Jeddah',
     organizer: 'GDG On Campus | UJ',
     line: 'A workshop on turning an idea into a real tech project with generative AI tools like Codex and Claude: you direct, the AI executes. I built parts of Sky Soarer there.',
-    link: { label: 'Sky Soarer →', href: 'https://github.com/lvbfront/Sky-Soarer' },
+    link: { label: 'Sky Soarer →', href: 'https://sky-soarer-3d-game.vercel.app/' },
     images: [
       { src: '/events/gdg-uj-1.webp', srcSet: '/events/gdg-uj-1-700.webp 700w, /events/gdg-uj-1.webp 1400w', w: 1400, h: 1053, alt: 'A presenter in a white thobe speaks beside a large screen showing Arabic calligraphy, facing a seated audience' },
       { src: '/events/gdg-uj-2.webp', srcSet: '/events/gdg-uj-2-700.webp 700w, /events/gdg-uj-2.webp 1400w', w: 1400, h: 933, alt: 'Attendees seated at tables with laptops, watching the session' },

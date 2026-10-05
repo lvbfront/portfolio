@@ -282,11 +282,16 @@ numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 �
 The game page reads as a **climb** ("Flight Log", echoing the game's own landing, "The Ascent"):
 `ALT 0 m — GROUND` hairline, numbered sections going up, then `ALT 5,000 m — ABOVE THE CLOUDS`.
 
-- **Facts come only from the game repo** (github.com/lvbfront/Sky-Soarer): its `CLAUDE.md` (and, for the
+- **The game repo (`lvbfront/Sky-Soarer`) is private.** No rendered page may link to it (not
+  /sky-soarer, not the Home events stop, nowhere); link the live game
+  (`https://sky-soarer-3d-game.vercel.app/`) instead. Reading it needs git access to that private repo
+  (e.g. an authenticated `gh repo clone lvbfront/Sky-Soarer`); without it, use only the facts already
+  recorded in this section and in the code's data arrays (each notes its source section).
+- **Facts come only from the game repo**: its `CLAUDE.md` (and, for the
   tagline-level copy, its code). Each data array notes its section (§1, §2, §3, §5, §6.3, §6.12, §12,
   §13). The unit-test count (307) is the latest run recorded in its §3 — re-read it there when the game
   changes; no other source. `PLAY_URL` is `https://sky-soarer-3d-game.vercel.app/` (given by the owner;
-  not recorded in the game repo); "Play it →" renders only when it is non-empty.
+  not recorded in the game repo); "Play it →" (hero and footer) renders only when it is non-empty.
 - **Altitudes:** labels are `NN — ALT m · NAME` (`Label`): 01 300 m, 02 1,200 m, 03 3,000 m (the game's
   real chapter altitudes), 04 4,000 m and 05 4,500 m (decorative), footer 5,000 m. Every label (and the
   header/footer) carries `data-alt`.
@@ -302,7 +307,7 @@ The game page reads as a **climb** ("Flight Log", echoing the game's own landing
   text written only when it changes (rounded to 10 m), marker transform. Decorative, `aria-hidden`.
 - **Hero ("Takeoff")** — meta strip, `SKY / SOARER` with the `.rise` reveal (sr-only "Sky Soarer" in the
   h1), «محلّق السماء» (`lang="ar" dir="rtl"`), the §1 description as the lede, tags, "Play it →" (only if
-  `PLAY_URL`) and "Source →" (new tab), the desktop/webcam note (§6.18), and the hero screenshot as
+  `PLAY_URL`, new tab; no "Source" link: the repo is private), the desktop/webcam note (§6.18), and the hero screenshot as
   `PLATE 01` (−2°, drift). **Hero image = LCP:** not lazy, `fetchpriority="high"`, `srcset`
   500/700/1400w, `sizes="(min-width: 1024px) 28rem, 86vw"`, preloaded from `index.html` — keep both
   identical.
