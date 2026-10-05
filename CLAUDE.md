@@ -7,7 +7,7 @@ session as any change it describes.
 
 - **Owner:** Abdullah Bukhari (AB) — AI Engineer: LLMs, Computer Vision & AI Agents.
   GitHub [lvbfront](https://github.com/lvbfront).
-- **What this is:** a single-page personal portfolio plus one project write-up page. Content is
+- **What this is:** a single-page personal portfolio plus two project pages (`/cdg`, `/sky-soarer`). Content is
   hard-coded in arrays — there is no CMS, database or backend.
 - **Repo:** https://github.com/lvbfront/portfolio (this folder is the repo root).
 - **Live URL:** deployed on Vercel from `main`; the production domain is not recorded in the repo
@@ -26,7 +26,7 @@ From `package.json` (exact ranges there; versions below are the declared ranges)
 - **@emailjs/browser** ^4.4.1 — contact form
 - **react-icons** ^5.7.0 — only `fa6` icons (GitHub, LinkedIn, envelope)
 - **@vercel/analytics** ^2.0.1 — Web Analytics
-- **gsap** ^3.15.0 (+ its ScrollTrigger plugin) — `/cdg` and the Home events section, lazy-loaded on both
+- **gsap** ^3.15.0 (+ its ScrollTrigger plugin) — `/cdg`, `/sky-soarer` and the Home events section, lazy-loaded on all three
 - **oxlint** ^1.81.0 — linter (`.oxlintrc.json`)
 
 No router library. No CSS-in-JS.
@@ -34,9 +34,9 @@ No router library. No CSS-in-JS.
 **Animation rule:** GSAP + ScrollTrigger are allowed anywhere on the site. Do not migrate existing
 effects that already work (mascot, timeline line fill, reveals, card flip) without a reason. All
 other performance rules (§7) still apply. GSAP is **never in the initial bundle**: it is only
-reached through dynamic `import('gsap')` / `import('gsap/ScrollTrigger')`, and both pages use those
+reached through dynamic `import('gsap')` / `import('gsap/ScrollTrigger')`, and every page uses those
 exact specifiers so Vite emits one shared pair of chunks (a visit to one page caches them for the
-other). In `Cdg.jsx` the import starts after the window `load` event (`motion` promise; effects
+other). In `Cdg.jsx` (and the same loader copied into `SkySoarer.jsx`) the import starts after the window `load` event (`motion` promise; effects
 set up GSAP in `motion.then`) — a static import cost mobile Lighthouse 97 → 94. On Home, `loadGsap()`
 in `Home.jsx` starts it when the page is idle after `load`, or when the events section comes within
 1.5 viewports, whichever is first. Existing Home effects stay on `scroll.js` + CSS — don't migrate.
@@ -53,17 +53,17 @@ npm run lint         # oxlint
 
 - Tests: none. Verification in this project has been done by driving a real browser
   (puppeteer-core against the installed Chrome) plus Lighthouse against `npm run preview`.
-- Lighthouse runs used `http://localhost:4173/` and `http://localhost:4173/#/cdg`.
-- Screenshots of a specific story chapter: `http://localhost:4173/#/cdg?ch=N` (see §5).
+- Lighthouse runs used `http://localhost:4173/`, `http://localhost:4173/#/cdg` and `http://localhost:4173/#/sky-soarer`.
+- Screenshots of a specific story chapter: `http://localhost:4173/#/cdg?ch=N` or `#/sky-soarer?ch=N` (see §5).
 
 ## 4. Architecture and folder map
 
 ```
 index.html              icons, title, meta description, font <link>, preload of /me.webp,
-                        and an inline script that preloads the /cdg poster on #/cdg only
+                        and an inline script that preloads the hero image on #/cdg and #/sky-soarer only
 src/
   main.jsx              startFavicon() + React root + <Analytics />
-  App.jsx               hash router; lazy-loads the /cdg page; sets document.title per route
+  App.jsx               hash router (`pages` table); lazy-loads /cdg and /sky-soarer; document.title per route
   scroll.js             the single rAF loop (onFrame / requestFrame)
   favicon.js            animated favicon (data-URI frames)
   index.css             Tailwind import, @theme, and every custom rule (~330 lines)
@@ -75,6 +75,7 @@ src/
   pages/
     Home.jsx            all homepage content arrays + homepage scroll logic
     Cdg.jsx             ClinicalDenoiseGuard page: hero, evidence, problem, scroll story, findings
+    SkySoarer.jsx       Sky Soarer game page: hero, worlds, hand → flight story, privacy, figures, build notes
 public/
   favicon.svg           simplified mascot icon
   favicon-32.png        PNG fallback
@@ -82,19 +83,21 @@ public/
   me.webp me-200.webp   hero photo (400px / 200px)
   cdg/                  poster.webp (1400w) + poster-700/-500.webp, team-toronto.webp, team-kaust.webp
                         (/cdg's own; the events section uses public/events/ only)
+  projects/sky-soarer/  the game's screenshots, <name>.webp (≤1400w) + <name>-700.webp (+ hero-500) — see §5
   events/               event photos, <slug>-<n>.webp (+ -700 variant), gdg-uj-1…4, kaust-1…3 — see §5
   robots.txt
 photo-source/           original uncropped photos — gitignored, never published
+                        (events/<slug>/, projects/sky-soarer/ = the game repo's docs/screenshots originals)
 ```
 
 **Routing** (`src/App.jsx`): hash-based, no library.
 
-- `#/cdg` → the project page; anything else → home. Only `#/…` counts as a route, so in-page
+- `#/cdg` and `#/sky-soarer` → the project pages (the `pages` table in `App.jsx`: component + title); anything else → home. Only `#/…` counts as a route, so in-page
   anchors (`#about`, `#projects`) keep working.
-- The project page is `lazy()` + `<Suspense>`, so it is a separate chunk (~7.6 kB gzipped) and the
+- Each project page is `lazy()` + `<Suspense>`, so it is a separate chunk (CDG ~7.6 kB, Sky Soarer ~9.9 kB gzipped) and the
   homepage bundle does not carry it. GSAP (27.4 kB) and ScrollTrigger (17.5 kB) are two further
   chunks that the page loads after `load`.
-- Route change scrolls to top and swaps `document.title`.
+- Route change scrolls to top and swaps `document.title`. Project pages pass `barTrigger={160}` to `Shell` (no `.pc` there).
 - Hash routing was chosen so any static host works with no rewrite rules.
 
 **Where content lives** — all in `src/pages/Home.jsx`, top of file:
@@ -275,6 +278,54 @@ numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 �
   trigger and pauses the timeline at `chN`) — for screenshots. Inert without the query; the router
   ignores it (`startsWith('#/cdg')`).
 
+### `/sky-soarer` page — `src/pages/SkySoarer.jsx`
+The game page reads as a **climb** ("Flight Log", echoing the game's own landing, "The Ascent"):
+`ALT 0 m — GROUND` hairline, numbered sections going up, then `ALT 5,000 m — ABOVE THE CLOUDS`.
+
+- **Facts come only from the game repo** (github.com/lvbfront/Sky-Soarer): its `CLAUDE.md` (and, for the
+  tagline-level copy, its code). Each data array notes its section (§1, §2, §3, §5, §6.3, §6.12, §12,
+  §13). The unit-test count (307) is the latest run recorded in its §3 — re-read it there when the game
+  changes; no other source. `PLAY_URL` is empty (no production URL is recorded in the game repo), so
+  "Play it →" doesn't render until it is set.
+- **Altitudes:** labels are `NN — ALT m · NAME` (`Label`): 01 300 m, 02 1,200 m, 03 3,000 m (the game's
+  real chapter altitudes), 04 4,000 m and 05 4,500 m (decorative), footer 5,000 m. Every label (and the
+  header/footer) carries `data-alt`.
+- **Altimeter:** phones get a fixed `ALT 0 m` pill under the mini bar; `lg` gets a fixed rail at the right
+  edge (ticks = `ALTS`, evenly spaced; marker in an `inset: 0` layer moved by `translateY %`). One
+  ScrollTrigger (`start 0`, `end max`, created in `mm.add('all')`, so it reverts on unmount) measures each
+  `[data-alt]` reaching 60% of the viewport **on refresh only**, then interpolates piecewise per scroll:
+  text written only when it changes (rounded to 10 m), marker transform. Decorative, `aria-hidden`.
+  Known: on phones the pill can briefly sit over the right end of a section label as it scrolls past.
+- **Hero ("Takeoff")** — meta strip, `SKY / SOARER` with the `.rise` reveal (sr-only "Sky Soarer" in the
+  h1), «محلّق السماء» (`lang="ar" dir="rtl"`), the §1 description as the lede, tags, "Play it →" (only if
+  `PLAY_URL`) and "Source →" (new tab), the desktop/webcam note (§6.18), and the hero screenshot as
+  `PLATE 01` (−2°, drift). **Hero image = LCP:** not lazy, `fetchpriority="high"`, `srcset`
+  500/700/1400w, `sizes="(min-width: 1024px) 28rem, 86vw"`, preloaded from `index.html` — keep both
+  identical.
+- **`01 — The worlds`** — birds/worlds/skies as a `<dl>`, the shemagh line (`<bdi lang="ar">` keeps the
+  bidi right), then the gallery: same as /cdg Evidence (scroll-snap strip + IO counter on phones,
+  staggered 2-column drift at `lg`, spec `<dl>`s). **One array, `plates`:** `[0]` hero, last = the
+  calibration screen (in Privacy), the rest the gallery.
+- **`02 — Hand → flight`** — the scroll story, same technique as /cdg (`Story`/`Stage`/`story()`): 600svh
+  wrapper, CSS-sticky stage, one scrubbed timeline with labels `ch1`…`ch6` and flat holds (longest at ch5,
+  the backflip), `labelsDirectional` snap on `lg` only, the `motion`/`reduce` matchMedia, a storyboard of
+  six static cards under reduced motion, `aria-hidden` stage + an `sr-only` list, and the QA helper
+  `#/sky-soarer?ch=N`. Visual: an SVG hand of the 21 MediaPipe landmarks (`OPEN`/`FIST` point sets
+  crossfaded; the palm landmarks 0/5/9/13/17 and the computed palm centre), the calibrated box with 5
+  reticles, and a side-view bird that pitches (ch3), barrel-rolls (`scaleY` −1, ch4), backflips (−360°
+  with a dashed loop, ch5) and flares for the brake (ch6, the hand scales 1.25× = the real engage ratio).
+  Captions, HUD readouts, counter and badges are `[data-…]` stacks in one grid cell. Disclaimer above:
+  "Schematic illustration. The thresholds are the game's real constants."
+- **`03 — Privacy by design`** (§1, §12), **`04 — Under the hood`** (figures `307 / 0 / 3 / 2` count up via
+  `data-countup`, same as /cdg; the stack as tags), **`05 — How it was built`** (Replit + Replit Agent →
+  GitHub → Claude Code: branch → PR → Vercel preview → merge; the GDG On Campus | UJ workshop).
+- **Lightbox, drift, count-up, refresh after fonts/images:** same as /cdg, in one `gsap.matchMedia()`.
+- **Media:** originals in `photo-source/projects/sky-soarer/` (copied from the game repo's
+  `docs/screenshots/`: landing, shemagh, ring-guidance, ocean, desert, hand-controls); exported with the
+  §5 photo convention to `public/projects/sky-soarer/` (+ `hero-500.webp` for the srcset).
+- **Shared code:** Label/Hairline/Plate/Stack and the GSAP loader are small copies of the /cdg ones —
+  `Cdg.jsx` was deliberately left untouched.
+
 ### Events & Competitions ("The Route") — `Events` / `Leg` / `Stop` / `Photo` in `src/pages/Home.jsx`
 - Between Projects and Skills; `events` is in `sections`, so the desktop nav and scroll-spy include
   it. There is no heading above the stage: the **first spread of the track is the heading** (mono
@@ -385,7 +436,7 @@ numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 �
 
 ## 6. Design language
 
-- **Section labels (`/cdg`):** one system — `Label` in `Cdg.jsx`: monospace 11px, uppercase,
+- **Section labels (`/cdg`, `/sky-soarer`):** one system (Sky Soarer shows altitudes, `NN — 300 m · NAME`) — `Label` in `Cdg.jsx`: monospace 11px, uppercase,
   `sky-700`, `NN — NAME`, a hairline, and a decorative depth `−NN.00` (`aria-hidden`). It renders
   the section's `h2` unless the section has its own heading (Evidence). Headings are bold with one
   italic accent phrase. `Hairline` draws the `±0.00` surface lines.
@@ -405,7 +456,13 @@ numbered sections going down (`01`…`04`, depth `−01.00`…), then `±0.00 �
 
 ## 7. Performance rules (and why)
 
-Targets: Lighthouse ≥95 on both routes. Current (local preview): home 100/100/96/100; `/cdg`
+Targets: Lighthouse ≥95 on every route. **Sky Soarer PR measurements (this machine, Lighthouse from the
+npx cache, simulated throttling):** home 100 (mobile + desktop, unchanged); `/sky-soarer` mobile
+94/100/96/100 (LCP 3.1 s, the hero image; the image itself lands early, the delay is the main bundle →
+page chunk waterfall), desktop 100/100/96/100; `/cdg` on an unmodified `main` build measured 91 mobile in
+the same run, so this environment reads lower than the figures below. Home JS 85.06 → 85.25 kB gz, CSS
+10.24 → 10.69 kB gz (the page's utilities in the shared stylesheet); SkySoarer chunk 9.9 kB gz; GSAP and
+ScrollTrigger chunks shared with /cdg and Home (same files). Current (local preview): home 100/100/96/100; `/cdg`
 mobile 97–98/100/96/100 (LCP ≈2.3–2.4s, the hero poster), desktop 100/100/96/100. Home JS
 ≈84.0 kB gzipped (81.6 before the events section); CDG chunk ≈7.6 kB + GSAP 27.4 kB + ScrollTrigger 17.5 kB (both after `load`).
 

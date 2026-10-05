@@ -66,6 +66,14 @@ const projects = [
     tags: ['PyTorch', 'LLMs', 'Interpretability', 'AI Safety'],
   },
   {
+    title: 'Sky Soarer',
+    badge: 'Game',
+    href: '#/sky-soarer',
+    description:
+      'A relaxing, endless 3D flight game: steer a low-poly bird with your bare hand in front of a webcam, tracked by MediaPipe Hands in the browser. Fully bilingual, English and Arabic.',
+    tags: ['Computer Vision', 'MediaPipe', 'three.js', 'React'],
+  },
+  {
     title: 'Recyclable Materials Classifier',
     badge: '1st Place',
     description: 'Image classification model for sorting recyclable materials; won 1st place in an AI competition.',
