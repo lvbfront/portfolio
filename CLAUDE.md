@@ -26,7 +26,7 @@ From `package.json` (exact ranges there; versions below are the declared ranges)
 - **@emailjs/browser** ^4.4.1 — contact form
 - **react-icons** ^5.7.0 — only `fa6` icons (GitHub, LinkedIn, envelope)
 - **@vercel/analytics** ^2.0.1 — Web Analytics
-- **gsap** ^3.15.0 (+ its ScrollTrigger plugin) — `/cdg`, `/sky-soarer` and the Home events section, lazy-loaded on all three
+- **gsap** ^3.15.0 (+ its ScrollTrigger plugin) — `/cdg`, `/sky-soarer` and the Home projects (The Catch) and events sections, lazy-loaded everywhere
 - **oxlint** ^1.81.0 — linter (`.oxlintrc.json`)
 
 No router library. No CSS-in-JS.
@@ -38,8 +38,8 @@ reached through dynamic `import('gsap')` / `import('gsap/ScrollTrigger')`, and e
 exact specifiers so Vite emits one shared pair of chunks (a visit to one page caches them for the
 other). In `Cdg.jsx` (and the same loader copied into `SkySoarer.jsx`) the import starts after the window `load` event (`motion` promise; effects
 set up GSAP in `motion.then`) — a static import cost mobile Lighthouse 97 → 94. On Home, `loadGsap()`
-in `Home.jsx` starts it when the page is idle after `load`, or when the events section comes within
-1.5 viewports, whichever is first. Existing Home effects stay on `scroll.js` + CSS — don't migrate.
+in `Home.jsx` starts it when the page is idle after `load`, or when the projects or events section comes
+within 1.5 viewports, whichever is first. Existing Home effects stay on `scroll.js` + CSS — don't migrate.
 
 ## 3. How to run
 
@@ -54,7 +54,8 @@ npm run lint         # oxlint
 - Tests: none. Verification in this project has been done by driving a real browser
   (puppeteer-core against the installed Chrome) plus Lighthouse against `npm run preview`.
 - Lighthouse runs used `http://localhost:4173/`, `http://localhost:4173/#/cdg` and `http://localhost:4173/#/sky-soarer`.
-- Screenshots of a specific story chapter: `http://localhost:4173/#/cdg?ch=N` or `#/sky-soarer?ch=N` (see §5).
+- Screenshots of a specific story chapter: `http://localhost:4173/#/cdg?ch=N` or `#/sky-soarer?ch=N` (see §5);
+  of a Home project's catch moment: `http://localhost:4173/#/?catch=N` (N = 1–6, see The Catch in §5).
 
 ## 4. Architecture and folder map
 
@@ -111,7 +112,7 @@ The CDG page's own content (`tags`, `findings` with their `figure`s, `plates`, s
 - One `requestAnimationFrame` loop for the whole page. `onFrame(cb)` subscribes and returns an
   unsubscribe; the first subscriber attaches the passive `scroll` and `resize` listeners.
 - Subscribers: `Shell` (mood, progress fallback, bar threshold), `Home` (nav highlight, timeline
-  item reveals, stacked cards), `ProfileCard` (flip fallback only).
+  item reveals), `ProfileCard` (flip fallback only).
 - Rules: callbacks write to the DOM directly, never read layout, and never set React state per
   frame.
 
@@ -143,12 +144,12 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
 - **Moods:** `Shell` sets `data-mood` on `<html>` — `happy` scrolling down, `surprised` scrolling
   up, back to `normal` 700ms after movement stops. Threshold is 2px and *accumulates*, so slow
   scrolling triggers it. Only elements with `.blob-react` react (mobile bar, timeline mascot,
-  events route blob); the
+  events route blob, The Catch's fisher); the
   card-back mascot does not.
 - `.blob-calm` disables the idle bob and blink (used by the timeline and events route mascots).
 - Instances: mobile bar (28px, reactive), card back (24px, idle), timeline cursor (22px, calm +
-  reactive) — the timeline renders once per list — and the events route blob (22px, calm +
-  reactive), so there are 5 on the homepage.
+  reactive) — the timeline renders once per list — the events route blob (22px, calm +
+  reactive) and the fisher in The Catch's boat (36px, reactive), so there are 6 on the homepage.
 - **Favicon variant** is a separate, simplified drawing in `public/favicon.svg` and duplicated in
   `src/favicon.js`: no folds, no hem, no outlines — they turn to mush at 16px. Sky disc behind it so
   it reads on light and dark browser themes. **If the mascot changes, both copies must be updated.**
@@ -180,11 +181,58 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
 - Desktop card is a fixed 10rem; short viewports tighten the column (`.sidecol`, `.sidenav`) instead
   of shrinking the card.
 
-### Stacked project cards (mobile only)
-- `.stack > li` are `position: sticky` with increasing top offsets below `--bar-h`, so they stack.
-- `Home` writes `--s` (scale down to 0.94) as the next card covers one, computed from cached
-  geometry, and only when the value changes.
-- All cards get an equal `--stack-h` so a taller card never peeks out under a shorter one.
+### Projects — "The Catch" — `Catch` / `catchTimeline` / `Fish` in `src/pages/Home.jsx`
+- **Replaced the stacked project cards on purpose** (owner's explicit decision, Oct 2026): the old
+  mobile sticky stack (`.stack`, `--s`, `--stack-h`) and the plain card list are gone. Content is
+  unchanged (`projects` array; the new `fish` field is only the short name on each fish). Only CDG
+  (`#/cdg`) and Sky Soarer (`#/sky-soarer`) have `href`; their card shows "Open the project →".
+- **Scene** (all `aria-hidden`): above the water the cards surface one at a time (all six stacked in
+  one grid cell, so the slot is as tall as the tallest card and nothing shifts); the Blob (36px,
+  `blob-react`) in a small SVG boat on the waterline with a rod (separate SVG) whose tip is at
+  `--lx` (58% of the stage); the fishing line (a fixed segment from the tip to the water, then a
+  `scaleY` segment in the water) and an amber hook. Underwater: a `sky-100 → sky-700` gradient, a
+  waving SVG line (`.catch-wave`, translateX loop), 4 rising bubbles (`.catch-bubble`), one SVG fish
+  per project at `depthOf(i)` (18% → 84% of the water, each deeper) offset by `fishX[i]` % from the
+  line, drifting (`.catch-drift`) with a white label, and a `DEPTH 0 m` meter (bottom-left, white
+  mono). **Every position is a percentage of the water**, so the timeline uses `yPercent`/`xPercent`
+  /`scaleY` on `inset: 0` layers and nothing is measured.
+- **Story per project** (`STEP` = 4.7 timeline units): drop (hook layer `yPercent` + line `scaleY`
+  to the fish's depth) → bite (the rig shakes once, a splash ring, the fish moves onto the line and
+  turns nose-up, its label fades) → reel (hook, line and fish rise together to 0) → catch (fish
+  scales/fades out, the card fades/scales in; label `catchN`; the Blob shows happy eyes) → hold 1.6
+  (the longest) → release (card slides left and fades; the next drop overlaps). End beat: the line
+  rests at 10% and "That's the catch for now." fades in (label `end`).
+- **Happy at the catch:** the timeline sets `data-glad="1"` on `.catch-blob` (an `attr` set, so it
+  reverses with scroll); a scoped rule in `index.css` shows `.eyes-happy` there. Otherwise the Blob
+  follows `data-mood` as usual. `Blob.jsx` and its rules are untouched.
+- **Depth meter:** the timeline's `onUpdate` reads the hook's `yPercent` and writes `DEPTH n m`
+  (`DEPTH` = 50 m at the bottom) only when the number changes. No React state.
+- **Mechanics:** wrapper `--n` (projects) × `80svh` (`65svh` at `lg`), CSS-sticky stage (`top:
+  var(--bar-h)`, `calc(100svh - var(--bar-h))` below `lg`; `top: 0`, `100svh` at `lg`), full-bleed on
+  phones (`-mx-6`), inside the right column on `lg` (not a full-screen chapter: the left column stays,
+  scroll-spy keeps Projects active). The section has **no `.reveal`** (its transform would skew
+  ScrollTrigger). One `gsap.matchMedia()` (`desktop`/`motion`/`reduce`, one of the last two always
+  matches) with one timeline on one ScrollTrigger (`top top` → `bottom bottom`, `scrub: 0.5`);
+  `labelsDirectional` snap on `lg` only, with **`inertia: false`** — with inertia, a Tab jump
+  (instant scroll = huge velocity) was projected several catches further. Reverted on unmount.
+  `ScrollTrigger.refresh()` after fonts + `load`. GSAP comes from the shared `loadGsap()`.
+- **Before GSAP:** the pre-GSAP DOM is the timeline's start state (cards `motion-safe:opacity-0`,
+  line `scaleY(0)`, hook at the surface, fish idle), so there is no jump when it takes over.
+- **Idle animations** run only while the section is on screen: an IntersectionObserver toggles
+  `.on` on `.catch`; otherwise `animation-play-state: paused`.
+- **Reduced motion:** wrapper `h-auto`, stage static; the scene is a static illustration (water
+  `h-56`) above a plain list of the white cards (`order-last`), each card with its small fish icon
+  (the icon is in the card's `h3` in both modes); the end line follows the list. No timeline.
+- **Accessibility:** a real `<ol>` of `<article>`s labelled by their `h3`, in reading order. Articles
+  without a link are `tabIndex=0`; linked ones are reached by their link. On focus inside the list
+  the page jumps (instant) to that project's `catchN`, so the focused card is the one on screen.
+- **Fit:** checked at 360×740, 375×667, 390×844, 430×932, 1280×720, 1366×768 with no horizontal
+  scroll. The tallest card (CDG / Laqta, ~330–350px at 375) leaves ~173px of water at 375×667;
+  under `short` only the card padding drops to `p-5` — the scene (water) shrinks first, the card
+  text never does. A longer description needs re-checking at 375×667.
+- **QA helper:** `#/?catch=N` (N = 1–6) scrolls to project N's catch and freezes it (disables the
+  trigger, pauses at `catch{N-1}`); under reduced motion it scrolls that card into view. Inert
+  without the query; the router treats `#/?…` as home.
 
 ### Reveals
 - `useReveal()` (exported from `Shell.jsx`) fades in `.reveal` sections and staggers `.tags` items.
@@ -471,7 +519,9 @@ npx cache, simulated throttling):** home 100 (mobile + desktop, unchanged); `/sk
 page chunk waterfall), desktop 100/100/96/100; `/cdg` on an unmodified `main` build measured 91 mobile in
 the same run, so this environment reads lower than the figures below. Home JS 85.06 → 85.25 kB gz, CSS
 10.24 → 10.69 kB gz (the page's utilities in the shared stylesheet); SkySoarer chunk 9.9 kB gz; GSAP and
-ScrollTrigger chunks shared with /cdg and Home (same files). Current (local preview): home 100/100/96/100; `/cdg`
+ScrollTrigger chunks shared with /cdg and Home (same files). **The Catch PR:** home 100/100/96/100 mobile and
+desktop (LCP 1.7 s / 0.43 s, CLS 0, TBT 0); Home JS 85.26 → 87.29 kB gz, CSS 10.84 → 11.37 kB gz; GSAP and
+ScrollTrigger chunk hashes unchanged. Current (local preview): home 100/100/96/100; `/cdg`
 mobile 97–98/100/96/100 (LCP ≈2.3–2.4s, the hero poster), desktop 100/100/96/100. Home JS
 ≈84.0 kB gzipped (81.6 before the events section); CDG chunk ≈7.6 kB + GSAP 27.4 kB + ScrollTrigger 17.5 kB (both after `load`).
 
@@ -480,7 +530,7 @@ Rules learned the hard way — breaking these caused real regressions:
 1. **No CSS transition on a scroll-linked transform.** A 150ms transition on `.tl-cursor` made the
    mascot permanently chase the page. Transitions are for the expression only.
 2. **One rAF loop.** Two loops (Shell + Home) wrote in different frames. (GSAP's ticker is a
-   second loop, but it only drives the `/cdg` story/effects and the Home events track.)
+   second loop, but it only drives the GSAP effects: the project pages, The Catch and the events track.)
 3. **No React state per frame.** `setActive`/`setShowBar` only fire when the value changes.
 4. **No layout reads inside the loop.** Section tops, list geometry and card offsets are cached in
    `measure()` and recomputed on resize / after fonts load. The loop is arithmetic plus writes.
@@ -498,9 +548,9 @@ Rules learned the hard way — breaking these caused real regressions:
 
 **Decision on the remaining iPhone jank:** do **not** disable the mobile effects to chase it. The
 scroll-linked animation path no longer touches JavaScript on supported browsers; if it is still not
-perfectly smooth on a real iPhone, accept it rather than stripping the flip card, stacked cards or
-travelling mascot. (Remaining suspects if it is ever revisited: the five sticky scaled cards, the
-3D flip with its shadow, and the fixed bar over a scrolling page.)
+perfectly smooth on a real iPhone, accept it rather than stripping the flip card or travelling
+mascot. (Remaining suspects if it is ever revisited: the 3D flip with its shadow, and the fixed bar
+over a scrolling page. The stacked cards are gone — replaced by The Catch.)
 
 ## 8. Conventions
 
@@ -549,7 +599,7 @@ travelling mascot. (Remaining suspects if it is ever revisited: the five sticky 
 - **Prose on `/cdg` was written by Claude from the owner's brief** and describes real research —
   it should be re-read by the owner whenever it changes.
 - iPhone scroll smoothness is not fully verified from this machine; all numbers are Chrome +
-  CPU throttling. This includes the `/cdg` scroll story, the Home events track, and iOS
+  CPU throttling. This includes the `/cdg` scroll story, The Catch, the Home events track, and iOS
   address-bar show/hide behaviour.
 - **`/cdg` has a 0.03–0.06 CLS from the web-font swap**: when Plus Jakarta Sans lands, the glyphs
   of the huge title and the lede move within their boxes (box heights don't change, and it happens
