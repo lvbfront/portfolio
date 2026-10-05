@@ -285,17 +285,21 @@ The game page reads as a **climb** ("Flight Log", echoing the game's own landing
 - **Facts come only from the game repo** (github.com/lvbfront/Sky-Soarer): its `CLAUDE.md` (and, for the
   tagline-level copy, its code). Each data array notes its section (§1, §2, §3, §5, §6.3, §6.12, §12,
   §13). The unit-test count (307) is the latest run recorded in its §3 — re-read it there when the game
-  changes; no other source. `PLAY_URL` is empty (no production URL is recorded in the game repo), so
-  "Play it →" doesn't render until it is set.
+  changes; no other source. `PLAY_URL` is `https://sky-soarer-3d-game.vercel.app/` (given by the owner;
+  not recorded in the game repo); "Play it →" renders only when it is non-empty.
 - **Altitudes:** labels are `NN — ALT m · NAME` (`Label`): 01 300 m, 02 1,200 m, 03 3,000 m (the game's
   real chapter altitudes), 04 4,000 m and 05 4,500 m (decorative), footer 5,000 m. Every label (and the
   header/footer) carries `data-alt`.
-- **Altimeter:** phones get a fixed `ALT 0 m` pill under the mini bar; `lg` gets a fixed rail at the right
+- **Altimeter:** phones get a fixed `ALT 0 m` pill **inside the mini bar's band** (left of its mascot,
+  `z-[45]` over the bar's 40, under the progress bar's 50). It is visible only while the bar is on: a
+  `[.minibar:not(.on)~main_&]:opacity-0` variant (Shell renders `.minibar` before `<main>`; Shell is
+  untouched), fading in 350 ms late so the bar has finished sliding down. Section labels only reach that
+  band once the opaque bar is on, so the pill can never cover a label (checked by scrolling the page in
+  20 px steps at 360/375/390/430 px: the pill was always inside the bar); `lg` gets a fixed rail at the right
   edge (ticks = `ALTS`, evenly spaced; marker in an `inset: 0` layer moved by `translateY %`). One
   ScrollTrigger (`start 0`, `end max`, created in `mm.add('all')`, so it reverts on unmount) measures each
   `[data-alt]` reaching 60% of the viewport **on refresh only**, then interpolates piecewise per scroll:
   text written only when it changes (rounded to 10 m), marker transform. Decorative, `aria-hidden`.
-  Known: on phones the pill can briefly sit over the right end of a section label as it scrolls past.
 - **Hero ("Takeoff")** — meta strip, `SKY / SOARER` with the `.rise` reveal (sr-only "Sky Soarer" in the
   h1), «محلّق السماء» (`lang="ar" dir="rtl"`), the §1 description as the lede, tags, "Play it →" (only if
   `PLAY_URL`) and "Source →" (new tab), the desktop/webcam note (§6.18), and the hero screenshot as

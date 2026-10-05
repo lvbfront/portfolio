@@ -15,7 +15,7 @@ const motion = loaded.then(() => Promise.all([import('gsap'), import('gsap/Scrol
 // Every fact on this page comes from the game repo's CLAUDE.md (github.com/lvbfront/Sky-Soarer);
 // the section is noted next to each one. Re-check them there when the game changes.
 const REPO = 'https://github.com/lvbfront/Sky-Soarer'
-const PLAY_URL = '' // the game's production URL isn't recorded in its repo; the button renders once this is set
+const PLAY_URL = 'https://sky-soarer-3d-game.vercel.app/' // the button renders only when this is set
 
 const tags = ['React', 'TypeScript', 'three.js', 'MediaPipe Hands', 'GSAP', 'Web Audio'] // §2
 const stack = ['React 19', 'TypeScript', 'Vite', 'Tailwind CSS v4', 'three.js (vanilla)', 'MediaPipe Hands', 'GSAP + ScrollTrigger', 'simplex-noise', 'Web Audio API', 'Vitest'] // §2
@@ -409,8 +409,11 @@ export default function SkySoarer() {
 
   return (
     <main ref={root} className="mx-auto max-w-6xl px-6 pb-20 pt-10 md:px-12">
-      {/* the altimeter: a readout on phones, a rail at lg. Decorative; the page reads the same without it. */}
-      <div aria-hidden="true" className="pointer-events-none fixed right-4 top-[calc(var(--bar-h)+0.5rem)] z-10 rounded-full border border-sky-100 bg-white/90 px-2.5 py-1 font-mono text-[11px] text-sky-800 shadow-sm lg:hidden">
+      {/* the altimeter: a readout on phones, a rail at lg. Decorative; the page reads the same without it.
+          The phone pill sits in the mini bar's band (left of its mascot, above it: z 45 vs 40), so a
+          section label never passes under it — labels only reach that band once the opaque bar is on.
+          It shows only with the bar (Shell's .minibar precedes <main>), so it never sits over the hero. */}
+      <div aria-hidden="true" className="pointer-events-none fixed right-[calc(max(1.5rem,env(safe-area-inset-right))+2.75rem)] top-[calc(env(safe-area-inset-top)+0.95rem)] z-[45] transition-opacity duration-200 delay-[350ms] [.minibar:not(.on)~main_&]:opacity-0 [.minibar:not(.on)~main_&]:delay-0 rounded-full border border-sky-100 bg-white/90 px-2.5 py-1 font-mono text-[11px] text-sky-800 shadow-sm lg:hidden">
         <span ref={(n) => (alt.current[0] = n)}>ALT 0 m</span>
       </div>
       <div aria-hidden="true" className="pointer-events-none fixed bottom-[20vh] right-5 top-[20vh] z-10 hidden w-24 lg:block">
