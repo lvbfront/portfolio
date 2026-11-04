@@ -194,8 +194,8 @@ const events = [
 
 const skills = {
   AI: ['LLMs', 'Computer Vision', 'AI Agents', 'PyTorch', 'TensorFlow', 'Hugging Face', 'Scikit-learn'],
-  'Languages & Data': ['Python', 'SQL', 'PostgreSQL', 'Pandas', 'NumPy'],
-  'Web & Tools': ['Django', 'FastAPI', 'Java', 'Spring Boot', 'React', 'Tailwind', 'Docker', 'Git', 'AWS'],
+  'Languages & Data': ['Python', 'Java', 'SQL', 'PostgreSQL', 'Pandas', 'NumPy'],
+  'Web & Tools': ['Django', 'FastAPI', 'Spring Boot', 'React', 'Tailwind', 'Docker', 'Git', 'AWS'],
 }
 
 const sections = ['about', 'experience', 'education', 'projects', 'events', 'skills', 'contact']
@@ -745,7 +745,7 @@ export default function Home() {
           {/* no fade: About is the LCP element */}
           <Section id="about" title="About" reveal={false}>
             <div className="space-y-4 leading-relaxed">
-              <p>I'm an AI engineer working across large language models, computer vision and AI agents.</p>
+              <p>I work across machine learning, backend and frontend, and I like taking an idea from a research prototype to a product people actually use.</p>
               <p>I've done research at the HIVE Lab at the University of Toronto and studied artificial intelligence at Umm Al-Qura University.</p>
               <p>I care about models that work in practice, and about clean, fast interfaces that let people actually use them.</p>
             </div>
