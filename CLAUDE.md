@@ -72,7 +72,9 @@ src/
     Shell.jsx           page chrome: sky blobs, progress bar, mobile bar, mood; exports useReveal()
     ProfileCard.jsx     hero flip card (photo front / highlights back)
     Blob.jsx            the mascot, inline SVG
+    LogoChip.jsx        institution logo chip for the Experience/Education timelines — see §5
     Contact.jsx         EmailJS contact form
+  assets/logos/         uqu.webp, kaust.webp: transparent 160×160 logos, imported by LogoChip
   pages/
     Home.jsx            all homepage content arrays + homepage scroll logic
     Cdg.jsx             ClinicalDenoiseGuard page: hero, evidence, problem, scroll story, findings
@@ -89,6 +91,7 @@ public/
   robots.txt
 photo-source/           original uncropped photos — gitignored, never published
                         (events/<slug>/, projects/sky-soarer/ = the game repo's docs/screenshots originals)
+logo-source/            original logos + the one-off prepare-logos.mjs — gitignored
 ```
 
 **Routing** (`src/App.jsx`): hash-based, no library.
@@ -170,6 +173,24 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
   firing an intersection, leaving them permanently invisible. This was tried and reverted.
 - Under reduced motion the animations are switched off, the line shows full, the cursor is hidden
   and all items are visible.
+- **Logo convention — `LogoChip` + `.logo-*` in `index.css`:** each item's `logo` field is a key in
+  `LogoChip.jsx` (`uqu`, `kaust`, `maple`, `building`, `code`). The chip is 32px below `sm`, 40px from
+  `sm` (white, `rounded-xl`, `sky-100` border, logo ~70%), in a flex row with the text block, and starts
+  at the item's `pl-6`, 13px clear of the mascot. **Everything is `sky-700` by default and shows its
+  original colours on hover/focus-within of the item**, opacity/colour only, 200ms, instant under reduced
+  motion. `building` and `code` are neutral stand-ins and stay `sky-700`.
+- **Raster logos** live in `src/assets/logos/` as transparent 160×160 WebP, one file per logo with no
+  tinted copy: the tint is `mask-image` on that WebP over `background: currentColor`, and the colour
+  version is an `<img>` crossfaded on top. The mask needs real transparency, so white details inside a
+  logo must be cut out too (KAUST's stripes are). The mask loads on render, so `loading="lazy"` on the
+  `<img>` doesn't delay the download. Originals and the one-off `sharp` script (run from a temp install,
+  never in `package.json`) are in the gitignored `logo-source/`.
+- **Maple leaf** is the 11-point leaf subpath of Wikimedia's `Flag_of_Canada.svg` (public domain),
+  inline with `fill="currentColor"`; on hover its colour becomes `#D52B1E`.
+- **Checking the mascot after a height change:** `html` has `scroll-behavior: smooth`, so a test must
+  scroll with `behavior: 'instant'` or it reads mid-animation. The rAF path can be forced in Chrome by
+  stubbing `CSS.supports` and deleting the `@supports (animation-timeline…)` rules. At 1366×768 the first
+  Experience item is already past the 72% line at scroll 0, so it is lit on load. That is expected.
 
 ### Profile card — `src/components/ProfileCard.jsx`
 - A real `<button>`, so Enter/Space and focus styling come free; `aria-pressed` tracks the flip.
@@ -572,8 +593,8 @@ over a scrolling page. The stacked cards are gone — replaced by The Catch.)
   (GitHub's noreply address, so the personal email stays out of history). Don't change it, don't set
   a global one.
 - **`.gitignore`** covers: logs, `node_modules`, `dist`/`dist-ssr`, `*.local`, editor dirs,
-  `.DS_Store`, `.env` and `.env.*`, and `photo-source/` (original uncropped photos — they contain
-  people and UI chrome that shouldn't be published).
+  `.DS_Store`, `.env` and `.env.*`, `photo-source/` (original uncropped photos — they contain
+  people and UI chrome that shouldn't be published), and `logo-source/` (original logo files).
 - **`dist/` is never committed.** Vercel builds from source.
 - **Screenshot branches (`pr-assets/*`) must contain a `vercel.json` with
   `{"git":{"deploymentEnabled":false}}`.** Without it, Vercel tries to build the branch (it has no

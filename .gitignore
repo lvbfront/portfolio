@@ -29,3 +29,4 @@ dist-ssr
 
 # Original uncropped photo (not for publishing; the site uses public/me.webp)
 photo-source/
+logo-source/

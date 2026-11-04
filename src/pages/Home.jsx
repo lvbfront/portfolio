@@ -3,6 +3,7 @@ import { FaGithub, FaLinkedin, FaEnvelope } from 'react-icons/fa6'
 import Contact from '../components/Contact.jsx'
 import ProfileCard from '../components/ProfileCard.jsx'
 import Blob from '../components/Blob.jsx'
+import LogoChip from '../components/LogoChip.jsx'
 import { useReveal } from '../components/Shell.jsx'
 import { onFrame, requestFrame } from '../scroll.js'
 
@@ -12,9 +13,10 @@ const socials = [
   { label: 'Email', href: 'mailto:abdu44ll3ah55@gmail.com', Icon: FaEnvelope },
 ]
 
-// `link` turns that part of the role into a link.
+// `link` turns that part of the role into a link. `logo` is a key from LogoChip.jsx.
 const experience = [
   {
+    logo: 'maple',
     role: 'AI Safety Research Scholar (SUDS Program)',
     link: { label: 'SUDS Program', href: 'https://datasciences.utoronto.ca/suds-cohort-program/' },
     place: 'HIVE Lab, Data Sciences Institute — University of Toronto',
@@ -23,6 +25,7 @@ const experience = [
       'Researched prompt-injection attacks on masked diffusion LLMs (LLaDA-8B) in medical settings. Built linear probes and SVD activation analysis that detect attacks at ≈0.96 AUC, and co-authored the resulting paper and poster.',
   },
   {
+    logo: 'building',
     role: 'AI Engineer Intern, R&D Team',
     place: 'First City, Saudi Arabia',
     date: 'Mar–Aug 2025',
@@ -30,6 +33,7 @@ const experience = [
       'Built full-stack apps with Django and React, and automation tools that turn documents into structured datasets for AI pipelines.',
   },
   {
+    logo: 'code',
     role: 'Independent Full-Stack Developer',
     place: 'School Management Platform',
     date: '2025–Present',
@@ -40,11 +44,13 @@ const experience = [
 
 const education = [
   {
+    logo: 'uqu',
     role: 'B.S. in Artificial Intelligence',
     place: 'Umm Al-Qura University',
     date: '2022–2026',
   },
   {
+    logo: 'kaust',
     role: 'AI Specialization',
     place: 'KAUST Academy',
     date: 'Jan–Sep 2026',
@@ -211,12 +217,17 @@ const Timeline = ({ items }) => (
     <span className="tl-cursor" aria-hidden="true"><Blob className="blob-calm blob-react" size={22} /></span>
     {items.map((x) => (
       <li key={x.role} className="relative pl-6">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-          <h3 className="font-semibold text-slate-800"><Role role={x.role} link={x.link} /></h3>
-          <p className="text-sm text-slate-500">{x.date}</p>
+        <div className="flex gap-3 sm:gap-4">
+          <LogoChip logo={x.logo} />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+              <h3 className="font-semibold text-slate-800"><Role role={x.role} link={x.link} /></h3>
+              <p className="ml-auto text-sm text-slate-500">{x.date}</p>
+            </div>
+            <p className="text-sm font-medium text-sky-700">{x.place}</p>
+            {x.description && <p className="mt-2 leading-relaxed">{x.description}</p>}
+          </div>
         </div>
-        <p className="text-sm font-medium text-sky-700">{x.place}</p>
-        {x.description && <p className="mt-2 leading-relaxed">{x.description}</p>}
       </li>
     ))}
   </ol>
