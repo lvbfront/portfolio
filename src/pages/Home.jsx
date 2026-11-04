@@ -187,7 +187,7 @@ const events = [
 const skills = {
   AI: ['LLMs', 'Computer Vision', 'AI Agents', 'PyTorch', 'TensorFlow', 'Hugging Face', 'Scikit-learn'],
   'Languages & Data': ['Python', 'SQL', 'PostgreSQL', 'Pandas', 'NumPy'],
-  'Web & Tools': ['Django', 'FastAPI', 'React', 'Tailwind', 'Docker', 'Git', 'AWS'],
+  'Web & Tools': ['Django', 'FastAPI', 'Java', 'Spring Boot', 'React', 'Tailwind', 'Docker', 'Git', 'AWS'],
 }
 
 const sections = ['about', 'experience', 'education', 'projects', 'events', 'skills', 'contact']
@@ -695,9 +695,9 @@ export default function Home() {
           <div className="flex flex-col">
             <h1 className="order-1 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-800">Abdullah</h1>
             <ProfileCard className="pc-desk order-2 mx-auto my-8 w-[80%] max-w-[300px] lg:order-first lg:mx-0 lg:mb-8 lg:mt-0" />
-            <p className="order-3 text-lg font-semibold text-slate-800 text-balance lg:mt-3">AI Engineer — LLMs, Computer Vision &amp; AI&nbsp;Agents</p>
+            <p className="order-3 text-lg font-semibold text-slate-800 text-balance lg:mt-3">Full-Stack AI Engineer</p>
             <p className="order-4 mt-4 max-w-xs leading-relaxed">
-              I build AI that reads, sees and acts, from language models and vision systems to voice agents.
+              I build AI products end to end — models, APIs and interfaces — and do research on making AI systems safe and reliable.
             </p>
 
             <nav aria-label="Sections" className="sidenav order-5 mt-10 hidden lg:block">

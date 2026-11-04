@@ -5,7 +5,7 @@ session as any change it describes.
 
 ## 1. Overview
 
-- **Owner:** Abdullah Bukhari (AB) — AI Engineer: LLMs, Computer Vision & AI Agents.
+- **Owner:** Abdullah Bukhari (AB) — Full-Stack AI Engineer.
   GitHub [lvbfront](https://github.com/lvbfront).
 - **What this is:** a single-page personal portfolio plus two project pages (`/cdg`, `/sky-soarer`). Content is
   hard-coded in arrays — there is no CMS, database or backend.
@@ -556,7 +556,9 @@ the same run, so this environment reads lower than the figures below. Home JS 85
 10.24 → 10.69 kB gz (the page's utilities in the shared stylesheet); SkySoarer chunk 9.9 kB gz; GSAP and
 ScrollTrigger chunks shared with /cdg and Home (same files). **The Catch PR:** home 100/100/96/100 mobile and
 desktop (LCP 1.7 s / 0.43 s, CLS 0, TBT 0); Home JS 85.26 → 87.29 kB gz, CSS 10.84 → 11.37 kB gz; GSAP and
-ScrollTrigger chunk hashes unchanged. Current (local preview): home 100/100/96/100; `/cdg`
+ScrollTrigger chunk hashes unchanged. **Timeline logos + hero copy:** home mobile 99/100/96/100 (LCP 1.7 → 1.9 s),
+desktop 100/100/96/100, CLS unchanged (0 mobile, 0.00005 desktop from the `h1`, same on `main`); Home JS 87.26 →
+87.98 kB gz, CSS 11.39 → 11.55 kB gz, plus the two logo files (20 kB). Current (local preview): home 100/100/96/100; `/cdg`
 mobile 97–98/100/96/100 (LCP ≈2.3–2.4s, the hero poster), desktop 100/100/96/100. Home JS
 ≈84.0 kB gzipped (81.6 before the events section); CDG chunk ≈7.6 kB + GSAP 27.4 kB + ScrollTrigger 17.5 kB (both after `load`).
 
