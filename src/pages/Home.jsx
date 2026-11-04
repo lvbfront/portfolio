@@ -670,10 +670,12 @@ export default function Home() {
       // Timeline. Position is a CSS scroll-driven animation where supported, so the only work
       // here is lighting the next item as the line passes it — arithmetic, no layout, and it
       // stops touching the list once everything is lit.
-      if (!still.matches) for (const l of geo.lists) {
-        if (l.next >= l.items.length && cssTimelines) continue
+      // Reduced motion still lights items (touch logo colours need it) but moves nothing.
+      for (const l of geo.lists) {
+        const moving = !cssTimelines && !still.matches
+        if (l.next >= l.items.length && !moving) continue
         const p = Math.min(Math.max((geo.line - (l.top - y)) / l.h, 0), 1)
-        if (!cssTimelines) {
+        if (moving) {
           l.fill.style.transform = `scale3d(1, ${p.toFixed(4)}, 1)`
           l.cursor.style.transform = `translate3d(0, ${(p * l.h).toFixed(1)}px, 0)`
         }

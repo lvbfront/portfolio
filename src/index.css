@@ -141,6 +141,12 @@ body {
 .timeline > li:is(:hover, :focus-within) .logo-mono { opacity: 0; }
 .timeline > li:is(:hover, :focus-within) .logo-color { opacity: 1; }
 .timeline > li:is(:hover, :focus-within) .logo-leaf { color: #d52b1e; }
+/* Touch screens have no hover: colours arrive when the scroll line lights the item, and stay, like the line fill. */
+@media (hover: none) {
+  .timeline > li.lit .logo-mono { opacity: 0; }
+  .timeline > li.lit .logo-color { opacity: 1; }
+  .timeline > li.lit .logo-leaf { color: #d52b1e; }
+}
 @media (prefers-reduced-motion: no-preference) {
   .logo-mono, .logo-color { transition: opacity 0.2s; }
   .logo-leaf { transition: color 0.2s; }

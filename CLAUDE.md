@@ -180,6 +180,9 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
   at the item's `pl-6`, 13px clear of the mascot. **Everything is `sky-700` by default and shows its
   original colours on hover/focus-within of the item**, opacity/colour only, 200ms, instant under reduced
   motion. `building` and `code` are neutral stand-ins and stay `sky-700`.
+- **Touch (`@media (hover: none)`):** the same colour swap follows `.lit`, so it needs no listener and stays
+  on once the item is passed, like the line fill. The loop keeps adding `.lit` under reduced motion (only
+  its transform writes are skipped); there `.lit` has no effect except these colours.
 - **Raster logos** live in `src/assets/logos/` as transparent 160×160 WebP, one file per logo with no
   tinted copy: the tint is `mask-image` on that WebP over `background: currentColor`, and the colour
   version is an `<img>` crossfaded on top. The mask needs real transparency, so white details inside a
