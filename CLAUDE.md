@@ -88,7 +88,7 @@ public/
   cdg/                  poster.webp (1400w) + poster-700/-500.webp, team-toronto.webp, team-kaust.webp
                         (/cdg's own; the events section uses public/events/ only)
   projects/sky-soarer/  the game's screenshots, <name>.webp (≤1400w) + <name>-700.webp (+ hero-500) — see §5
-  events/               event photos, <slug>-<n>.webp (+ -700 variant), gdg-uj-1…4, kaust-1…3 — see §5
+  events/               event photos, <slug>-<n>.webp (+ -700 variant), gdg-uj-1…4, kaust-1…3, visionthon-1…3 — see §5
   robots.txt
 photo-source/           original uncropped photos — gitignored, never published
                         (events/<slug>/, projects/sky-soarer/ = the game repo's docs/screenshots originals)
@@ -504,8 +504,13 @@ The game page reads as a **climb** ("Flight Log", echoing the game's own landing
   then replace the stop's `{ placeholder: true }` with
   `{ src: '/events/<slug>-<n>.webp', srcSet: '/events/<slug>-<n>-700.webp 700w, /events/<slug>-<n>.webp 1400w', w, h, alt }`.
   Images are 4:3 `object-cover` (focus 50% 60%), lazy, with width/height set.
+  **Thumbnails can skip the variant:** visionthon-2 and -3 are row photos only, so each is one 700w file (over 2× their
+  largest display size) with no `srcSet`. visionthon-2 is a 1500×1125 crop from x=260, y=190, so the room reads when small.
+  **Row width:** `rowLeft` replaces where a photo row starts on `lg`. Visionthon uses `lg:left-1/3`, about ⅓ of the main photo
+  per thumbnail, because the default half-width row hid its front row of people. Its main photo uses `short:object-bottom`,
+  so the 2:1 crop keeps the audience and only trims the wall above the screen.
   **One folder per event:** all of an event's originals live together in `photo-source/events/<slug>/`
-  (gdg-uj, kaust). The KAUST folder also holds a copy of the original behind `/cdg/team-kaust.webp`
+  (gdg-uj, kaust; Visionthon's three originals are in `photo-source/visionthon/`). The KAUST folder also holds a copy of the original behind `/cdg/team-kaust.webp`
   (`team-kaust-original.jpeg`); `/cdg` still uses its own file, and the events stop uses
   `kaust-2.webp`, exported from that copy, so the photo is published twice on purpose — one per
   page. If a photo's subject runs edge to edge, export a full-width band no wider than 4:3 (so the
@@ -562,7 +567,8 @@ ScrollTrigger chunks shared with /cdg and Home (same files). **The Catch PR:** h
 desktop (LCP 1.7 s / 0.43 s, CLS 0, TBT 0); Home JS 85.26 → 87.29 kB gz, CSS 10.84 → 11.37 kB gz; GSAP and
 ScrollTrigger chunk hashes unchanged. **Timeline logos + hero copy:** home mobile 99/100/96/100 (LCP 1.7 → 1.9 s),
 desktop 100/100/96/100, CLS unchanged (0 mobile, 0.00005 desktop from the `h1`, same on `main`); Home JS 87.26 →
-87.98 kB gz, CSS 11.39 → 11.55 kB gz, plus the two logo files (20 kB). Current (local preview): home 100/100/96/100; `/cdg`
+88.39 kB gz, CSS 11.39 → 11.59 kB gz, plus the three logo files (35 kB) and, after the role, touch colours, copy and
+Visionthon photos, the same scores. Current (local preview): home 100/100/96/100; `/cdg`
 mobile 97–98/100/96/100 (LCP ≈2.3–2.4s, the hero poster), desktop 100/100/96/100. Home JS
 ≈84.0 kB gzipped (81.6 before the events section); CDG chunk ≈7.6 kB + GSAP 27.4 kB + ScrollTrigger 17.5 kB (both after `load`).
 

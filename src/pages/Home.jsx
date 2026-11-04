@@ -122,7 +122,8 @@ const projects = [
 // field renders only when present. `images` (1–4): { src, w, h, alt, srcSet?, pos? } or { placeholder: true };
 // `pos` replaces the default crop focus (an object-position class) for a photo whose subject sits on an edge;
 // the first is the main photo; one more sits smaller on its corner, two or three form a row under it.
-// `wide` makes the panel span two; `stop` overrides the city label under its dot on the route.
+// `wide` makes the panel span two; `stop` overrides the city label under its dot on the route;
+// `rowLeft` replaces where a photo row starts on lg (a narrower row covers less of the main photo).
 const events = [
   {
     title: 'Visionthon',
@@ -132,7 +133,13 @@ const events = [
     result: '1st Place',
     project: 'Recyclable Materials Classifier',
     line: projects.find((p) => p.title === 'Recyclable Materials Classifier').description,
-    images: [{ placeholder: true }],
+    wide: true,
+    rowLeft: 'lg:left-1/3',
+    images: [
+      { src: '/events/visionthon-1.webp', srcSet: '/events/visionthon-1-700.webp 700w, /events/visionthon-1.webp 1400w', w: 1400, h: 933, pos: 'short:object-bottom', alt: 'A presenter in a dark thobe stands beside a screen titled "AI Coding Agents", facing a seated audience' },
+      { src: '/events/visionthon-2.webp', w: 700, h: 525, alt: 'A presenter in a white thobe stands beside a screen of Arabic text, facing a room of seated participants' },
+      { src: '/events/visionthon-3.webp', w: 700, h: 467, alt: 'Two participants, one in a patterned hoodie and one in a grey thobe, work together on a sticker-covered laptop' },
+    ],
   },
   {
     title: 'X-thon — University of Tabuk × NEOM',
@@ -306,7 +313,7 @@ const Stop = ({ e }) => {
           <div className={`relative ${row ? 'lg:mr-4 lg:mb-[12%]' : rest.length ? 'mr-4 mb-8' : ''}`}>
             <Photo img={main} className="w-full" />
             {rest.length > 0 && (
-              <div className={`flex gap-2 ${row ? 'mt-2 lg:absolute lg:-right-4 lg:bottom-0 lg:left-8 lg:mt-0 lg:translate-y-1/2' : 'absolute -right-4 -bottom-8 w-2/5'}`}>
+              <div className={`flex gap-2 ${row ? `mt-2 lg:absolute lg:-right-4 lg:bottom-0 lg:mt-0 lg:translate-y-1/2 ${e.rowLeft ?? 'lg:left-8'}` : 'absolute -right-4 -bottom-8 w-2/5'}`}>
                 {rest.map((img, i) => <Photo key={i} img={img} className="min-w-0 flex-1 ring-4 ring-white" />)}
               </div>
             )}
