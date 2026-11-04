@@ -28,7 +28,7 @@ export default function Contact() {
   return (
     <>
       <p className="mb-8 leading-relaxed">
-        Working on something in LLMs, computer vision or AI agents, or just want to say hello? Send me a message.
+        If you're building something with AI, need someone who can take it from model to product, or just want to say hello, get in touch.
       </p>
       <form onSubmit={onSubmit} className="space-y-5">
         <div className="grid gap-5 sm:grid-cols-2">

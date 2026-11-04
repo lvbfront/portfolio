@@ -87,7 +87,7 @@ export default function Shell({ route, barTrigger, children }) {
           <img src="/me.webp" alt="" width="36" height="36" className="minibar-avatar size-9 rounded-full object-cover object-[50%_20%] ring-2 ring-sky-100" />
           <span className="leading-tight">
             <span className="block text-sm font-bold text-slate-800">Abdullah</span>
-            <span className="block text-xs text-slate-500">AI Engineer</span>
+            <span className="block text-xs text-slate-500">Full-Stack AI Engineer</span>
             <span className="sr-only">, back to top</span>
           </span>
         </button>

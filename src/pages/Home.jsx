@@ -3,6 +3,7 @@ import { FaGithub, FaLinkedin, FaEnvelope } from 'react-icons/fa6'
 import Contact from '../components/Contact.jsx'
 import ProfileCard from '../components/ProfileCard.jsx'
 import Blob from '../components/Blob.jsx'
+import LogoChip from '../components/LogoChip.jsx'
 import { useReveal } from '../components/Shell.jsx'
 import { onFrame, requestFrame } from '../scroll.js'
 
@@ -12,9 +13,18 @@ const socials = [
   { label: 'Email', href: 'mailto:abdu44ll3ah55@gmail.com', Icon: FaEnvelope },
 ]
 
-// `link` turns that part of the role into a link.
+// `link` turns that part of the role into a link. `logo` is a key from LogoChip.jsx.
 const experience = [
   {
+    logo: 'emcrey',
+    role: 'Associate Engineer',
+    place: 'eMcREY — Riyadh, Saudi Arabia',
+    date: 'Nov 2026–Present',
+    description:
+      'Working on payments technology for banks in Saudi Arabia and the wider region, at a company that builds card, payment, and open banking infrastructure.',
+  },
+  {
+    logo: 'maple',
     role: 'AI Safety Research Scholar (SUDS Program)',
     link: { label: 'SUDS Program', href: 'https://datasciences.utoronto.ca/suds-cohort-program/' },
     place: 'HIVE Lab, Data Sciences Institute — University of Toronto',
@@ -23,6 +33,7 @@ const experience = [
       'Researched prompt-injection attacks on masked diffusion LLMs (LLaDA-8B) in medical settings. Built linear probes and SVD activation analysis that detect attacks at ≈0.96 AUC, and co-authored the resulting paper and poster.',
   },
   {
+    logo: 'building',
     role: 'AI Engineer Intern, R&D Team',
     place: 'First City, Saudi Arabia',
     date: 'Mar–Aug 2025',
@@ -30,6 +41,7 @@ const experience = [
       'Built full-stack apps with Django and React, and automation tools that turn documents into structured datasets for AI pipelines.',
   },
   {
+    logo: 'code',
     role: 'Independent Full-Stack Developer',
     place: 'School Management Platform',
     date: '2025–Present',
@@ -40,11 +52,13 @@ const experience = [
 
 const education = [
   {
+    logo: 'uqu',
     role: 'B.S. in Artificial Intelligence',
     place: 'Umm Al-Qura University',
     date: '2022–2026',
   },
   {
+    logo: 'kaust',
     role: 'AI Specialization',
     place: 'KAUST Academy',
     date: 'Jan–Sep 2026',
@@ -108,7 +122,8 @@ const projects = [
 // field renders only when present. `images` (1–4): { src, w, h, alt, srcSet?, pos? } or { placeholder: true };
 // `pos` replaces the default crop focus (an object-position class) for a photo whose subject sits on an edge;
 // the first is the main photo; one more sits smaller on its corner, two or three form a row under it.
-// `wide` makes the panel span two; `stop` overrides the city label under its dot on the route.
+// `wide` makes the panel span two; `stop` overrides the city label under its dot on the route;
+// `rowLeft` replaces where a photo row starts on lg (a narrower row covers less of the main photo).
 const events = [
   {
     title: 'Visionthon',
@@ -118,7 +133,13 @@ const events = [
     result: '1st Place',
     project: 'Recyclable Materials Classifier',
     line: projects.find((p) => p.title === 'Recyclable Materials Classifier').description,
-    images: [{ placeholder: true }],
+    wide: true,
+    rowLeft: 'lg:left-1/3',
+    images: [
+      { src: '/events/visionthon-1.webp', srcSet: '/events/visionthon-1-700.webp 700w, /events/visionthon-1.webp 1400w', w: 1400, h: 933, pos: 'short:object-bottom', alt: 'A presenter in a dark thobe stands beside a screen titled "AI Coding Agents", facing a seated audience' },
+      { src: '/events/visionthon-2.webp', w: 700, h: 525, alt: 'A presenter in a white thobe stands beside a screen of Arabic text, facing a room of seated participants' },
+      { src: '/events/visionthon-3.webp', w: 700, h: 467, alt: 'Two participants, one in a patterned hoodie and one in a grey thobe, work together on a sticker-covered laptop' },
+    ],
   },
   {
     title: 'X-thon — University of Tabuk × NEOM',
@@ -180,8 +201,8 @@ const events = [
 
 const skills = {
   AI: ['LLMs', 'Computer Vision', 'AI Agents', 'PyTorch', 'TensorFlow', 'Hugging Face', 'Scikit-learn'],
-  'Languages & Data': ['Python', 'SQL', 'PostgreSQL', 'Pandas', 'NumPy'],
-  'Web & Tools': ['Django', 'FastAPI', 'React', 'Tailwind', 'Docker', 'Git', 'AWS'],
+  'Languages & Data': ['Python', 'Java', 'SQL', 'PostgreSQL', 'Pandas', 'NumPy'],
+  'Web & Tools': ['Django', 'FastAPI', 'Spring Boot', 'React', 'Tailwind', 'Docker', 'Git', 'AWS'],
 }
 
 const sections = ['about', 'experience', 'education', 'projects', 'events', 'skills', 'contact']
@@ -211,12 +232,17 @@ const Timeline = ({ items }) => (
     <span className="tl-cursor" aria-hidden="true"><Blob className="blob-calm blob-react" size={22} /></span>
     {items.map((x) => (
       <li key={x.role} className="relative pl-6">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-          <h3 className="font-semibold text-slate-800"><Role role={x.role} link={x.link} /></h3>
-          <p className="text-sm text-slate-500">{x.date}</p>
+        <div className="flex gap-3 sm:gap-4">
+          <LogoChip logo={x.logo} />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+              <h3 className="font-semibold text-slate-800"><Role role={x.role} link={x.link} /></h3>
+              <p className="ml-auto text-sm text-slate-500">{x.date}</p>
+            </div>
+            <p className="text-sm font-medium text-sky-700">{x.place}</p>
+            {x.description && <p className="mt-2 leading-relaxed">{x.description}</p>}
+          </div>
         </div>
-        <p className="text-sm font-medium text-sky-700">{x.place}</p>
-        {x.description && <p className="mt-2 leading-relaxed">{x.description}</p>}
       </li>
     ))}
   </ol>
@@ -287,7 +313,7 @@ const Stop = ({ e }) => {
           <div className={`relative ${row ? 'lg:mr-4 lg:mb-[12%]' : rest.length ? 'mr-4 mb-8' : ''}`}>
             <Photo img={main} className="w-full" />
             {rest.length > 0 && (
-              <div className={`flex gap-2 ${row ? 'mt-2 lg:absolute lg:-right-4 lg:bottom-0 lg:left-8 lg:mt-0 lg:translate-y-1/2' : 'absolute -right-4 -bottom-8 w-2/5'}`}>
+              <div className={`flex gap-2 ${row ? `mt-2 lg:absolute lg:-right-4 lg:bottom-0 lg:mt-0 lg:translate-y-1/2 ${e.rowLeft ?? 'lg:left-8'}` : 'absolute -right-4 -bottom-8 w-2/5'}`}>
                 {rest.map((img, i) => <Photo key={i} img={img} className="min-w-0 flex-1 ring-4 ring-white" />)}
               </div>
             )}
@@ -651,10 +677,12 @@ export default function Home() {
       // Timeline. Position is a CSS scroll-driven animation where supported, so the only work
       // here is lighting the next item as the line passes it — arithmetic, no layout, and it
       // stops touching the list once everything is lit.
-      if (!still.matches) for (const l of geo.lists) {
-        if (l.next >= l.items.length && cssTimelines) continue
+      // Reduced motion still lights items (touch logo colours need it) but moves nothing.
+      for (const l of geo.lists) {
+        const moving = !cssTimelines && !still.matches
+        if (l.next >= l.items.length && !moving) continue
         const p = Math.min(Math.max((geo.line - (l.top - y)) / l.h, 0), 1)
-        if (!cssTimelines) {
+        if (moving) {
           l.fill.style.transform = `scale3d(1, ${p.toFixed(4)}, 1)`
           l.cursor.style.transform = `translate3d(0, ${(p * l.h).toFixed(1)}px, 0)`
         }
@@ -684,9 +712,9 @@ export default function Home() {
           <div className="flex flex-col">
             <h1 className="order-1 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-800">Abdullah</h1>
             <ProfileCard className="pc-desk order-2 mx-auto my-8 w-[80%] max-w-[300px] lg:order-first lg:mx-0 lg:mb-8 lg:mt-0" />
-            <p className="order-3 text-lg font-semibold text-slate-800 text-balance lg:mt-3">AI Engineer — LLMs, Computer Vision &amp; AI&nbsp;Agents</p>
+            <p className="order-3 text-lg font-semibold text-slate-800 text-balance lg:mt-3">Full-Stack AI Engineer</p>
             <p className="order-4 mt-4 max-w-xs leading-relaxed">
-              I build AI that reads, sees and acts, from language models and vision systems to voice agents.
+              I build AI products end to end — models, APIs and interfaces — and do research on making AI systems safe and reliable.
             </p>
 
             <nav aria-label="Sections" className="sidenav order-5 mt-10 hidden lg:block">
@@ -724,7 +752,7 @@ export default function Home() {
           {/* no fade: About is the LCP element */}
           <Section id="about" title="About" reveal={false}>
             <div className="space-y-4 leading-relaxed">
-              <p>I'm an AI engineer working across large language models, computer vision and AI agents.</p>
+              <p>I work across machine learning, backend and frontend, and I like taking an idea from a research prototype to a product people actually use.</p>
               <p>I've done research at the HIVE Lab at the University of Toronto and studied artificial intelligence at Umm Al-Qura University.</p>
               <p>I care about models that work in practice, and about clean, fast interfaces that let people actually use them.</p>
             </div>

@@ -5,7 +5,8 @@ session as any change it describes.
 
 ## 1. Overview
 
-- **Owner:** Abdullah Bukhari (AB) — AI Engineer: LLMs, Computer Vision & AI Agents.
+- **Owner:** Abdullah Bukhari (AB) — Full-Stack AI Engineer. Current role: Associate Engineer at eMcREY
+  (Riyadh, since Nov 2026).
   GitHub [lvbfront](https://github.com/lvbfront).
 - **What this is:** a single-page personal portfolio plus two project pages (`/cdg`, `/sky-soarer`). Content is
   hard-coded in arrays — there is no CMS, database or backend.
@@ -72,7 +73,9 @@ src/
     Shell.jsx           page chrome: sky blobs, progress bar, mobile bar, mood; exports useReveal()
     ProfileCard.jsx     hero flip card (photo front / highlights back)
     Blob.jsx            the mascot, inline SVG
+    LogoChip.jsx        institution logo chip for the Experience/Education timelines — see §5
     Contact.jsx         EmailJS contact form
+  assets/logos/         emcrey.webp, uqu.webp, kaust.webp: transparent 160×160 logos, imported by LogoChip
   pages/
     Home.jsx            all homepage content arrays + homepage scroll logic
     Cdg.jsx             ClinicalDenoiseGuard page: hero, evidence, problem, scroll story, findings
@@ -85,10 +88,11 @@ public/
   cdg/                  poster.webp (1400w) + poster-700/-500.webp, team-toronto.webp, team-kaust.webp
                         (/cdg's own; the events section uses public/events/ only)
   projects/sky-soarer/  the game's screenshots, <name>.webp (≤1400w) + <name>-700.webp (+ hero-500) — see §5
-  events/               event photos, <slug>-<n>.webp (+ -700 variant), gdg-uj-1…4, kaust-1…3 — see §5
+  events/               event photos, <slug>-<n>.webp (+ -700 variant), gdg-uj-1…4, kaust-1…3, visionthon-1…3 — see §5
   robots.txt
 photo-source/           original uncropped photos — gitignored, never published
                         (events/<slug>/, projects/sky-soarer/ = the game repo's docs/screenshots originals)
+logo-source/            original logos + the one-off prepare-logos.mjs — gitignored
 ```
 
 **Routing** (`src/App.jsx`): hash-based, no library.
@@ -170,6 +174,27 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
   firing an intersection, leaving them permanently invisible. This was tried and reverted.
 - Under reduced motion the animations are switched off, the line shows full, the cursor is hidden
   and all items are visible.
+- **Logo convention — `LogoChip` + `.logo-*` in `index.css`:** each item's `logo` field is a key in
+  `LogoChip.jsx` (`emcrey`, `uqu`, `kaust`, `maple`, `building`, `code`). The chip is 32px below `sm`, 40px from
+  `sm` (white, `rounded-xl`, `sky-100` border, logo ~70%), in a flex row with the text block, and starts
+  at the item's `pl-6`, 13px clear of the mascot. **Everything is `sky-700` by default and shows its
+  original colours on hover/focus-within of the item**, opacity/colour only, 200ms, instant under reduced
+  motion. `building` and `code` are neutral stand-ins and stay `sky-700`.
+- **Touch (`@media (hover: none)`):** the same colour swap follows `.lit`, so it needs no listener and stays
+  on once the item is passed, like the line fill. The loop keeps adding `.lit` under reduced motion (only
+  its transform writes are skipped); there `.lit` has no effect except these colours.
+- **Raster logos** live in `src/assets/logos/` as transparent 160×160 WebP, one file per logo with no
+  tinted copy: the tint is `mask-image` on that WebP over `background: currentColor`, and the colour
+  version is an `<img>` crossfaded on top. The mask needs real transparency, so white details inside a
+  logo must be cut out too (KAUST's stripes and eMcREY's ring centres are). The mask loads on render, so `loading="lazy"` on the
+  `<img>` doesn't delay the download. Originals and the one-off `sharp` script (run from a temp install,
+  never in `package.json`) are in the gitignored `logo-source/`.
+- **Maple leaf** is the 11-point leaf subpath of Wikimedia's `Flag_of_Canada.svg` (public domain),
+  inline with `fill="currentColor"`; on hover its colour becomes `#D52B1E`.
+- **Checking the mascot after a height change:** `html` has `scroll-behavior: smooth`, so a test must
+  scroll with `behavior: 'instant'` or it reads mid-animation. The rAF path can be forced in Chrome by
+  stubbing `CSS.supports` and deleting the `@supports (animation-timeline…)` rules. At 1366×768 the first
+  Experience item is already past the 72% line at scroll 0, so it is lit on load. That is expected.
 
 ### Profile card — `src/components/ProfileCard.jsx`
 - A real `<button>`, so Enter/Space and focus styling come free; `aria-pressed` tracks the flip.
@@ -177,7 +202,9 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
 - One-time wobble on `.pc-wobble` 900ms after load, to hint it's interactive; "tap to flip" badge on
   the front only.
 - Back face sizes its text with container query units (`cqw`) so it fits the 160px desktop card and
-  the ~274px mobile one; below 130px wide only the first highlight shows.
+  the ~274px mobile one; below 130px wide only the first highlight shows (the current role, so keep it first). Three
+  lines is the limit: a fourth fills the card and runs into the mascot at every size. On the 160px
+  desktop card, `padding-bottom: 14cqw` (container query, 130–200px wide) lifts the pills 3.7px clear of the mascot.
 - Desktop card is a fixed 10rem; short viewports tighten the column (`.sidecol`, `.sidenav`) instead
   of shrinking the card.
 
@@ -479,8 +506,13 @@ The game page reads as a **climb** ("Flight Log", echoing the game's own landing
   then replace the stop's `{ placeholder: true }` with
   `{ src: '/events/<slug>-<n>.webp', srcSet: '/events/<slug>-<n>-700.webp 700w, /events/<slug>-<n>.webp 1400w', w, h, alt }`.
   Images are 4:3 `object-cover` (focus 50% 60%), lazy, with width/height set.
+  **Thumbnails can skip the variant:** visionthon-2 and -3 are row photos only, so each is one 700w file (over 2× their
+  largest display size) with no `srcSet`. visionthon-2 is a 1500×1125 crop from x=260, y=190, so the room reads when small.
+  **Row width:** `rowLeft` replaces where a photo row starts on `lg`. Visionthon uses `lg:left-1/3`, about ⅓ of the main photo
+  per thumbnail, because the default half-width row hid its front row of people. Its main photo uses `short:object-bottom`,
+  so the 2:1 crop keeps the audience and only trims the wall above the screen.
   **One folder per event:** all of an event's originals live together in `photo-source/events/<slug>/`
-  (gdg-uj, kaust). The KAUST folder also holds a copy of the original behind `/cdg/team-kaust.webp`
+  (gdg-uj, kaust; Visionthon's three originals are in `photo-source/visionthon/`). The KAUST folder also holds a copy of the original behind `/cdg/team-kaust.webp`
   (`team-kaust-original.jpeg`); `/cdg` still uses its own file, and the events stop uses
   `kaust-2.webp`, exported from that copy, so the photo is published twice on purpose — one per
   page. If a photo's subject runs edge to edge, export a full-width band no wider than 4:3 (so the
@@ -535,7 +567,10 @@ the same run, so this environment reads lower than the figures below. Home JS 85
 10.24 → 10.69 kB gz (the page's utilities in the shared stylesheet); SkySoarer chunk 9.9 kB gz; GSAP and
 ScrollTrigger chunks shared with /cdg and Home (same files). **The Catch PR:** home 100/100/96/100 mobile and
 desktop (LCP 1.7 s / 0.43 s, CLS 0, TBT 0); Home JS 85.26 → 87.29 kB gz, CSS 10.84 → 11.37 kB gz; GSAP and
-ScrollTrigger chunk hashes unchanged. Current (local preview): home 100/100/96/100; `/cdg`
+ScrollTrigger chunk hashes unchanged. **Timeline logos + hero copy:** home mobile 99/100/96/100 (LCP 1.7 → 1.9 s),
+desktop 100/100/96/100, CLS unchanged (0 mobile, 0.00005 desktop from the `h1`, same on `main`); Home JS 87.26 →
+88.39 kB gz, CSS 11.39 → 11.59 kB gz, plus the three logo files (35 kB) and, after the role, touch colours, copy and
+Visionthon photos, the same scores. Current (local preview): home 100/100/96/100; `/cdg`
 mobile 97–98/100/96/100 (LCP ≈2.3–2.4s, the hero poster), desktop 100/100/96/100. Home JS
 ≈84.0 kB gzipped (81.6 before the events section); CDG chunk ≈7.6 kB + GSAP 27.4 kB + ScrollTrigger 17.5 kB (both after `load`).
 
@@ -572,8 +607,8 @@ over a scrolling page. The stacked cards are gone — replaced by The Catch.)
   (GitHub's noreply address, so the personal email stays out of history). Don't change it, don't set
   a global one.
 - **`.gitignore`** covers: logs, `node_modules`, `dist`/`dist-ssr`, `*.local`, editor dirs,
-  `.DS_Store`, `.env` and `.env.*`, and `photo-source/` (original uncropped photos — they contain
-  people and UI chrome that shouldn't be published).
+  `.DS_Store`, `.env` and `.env.*`, `photo-source/` (original uncropped photos — they contain
+  people and UI chrome that shouldn't be published), and `logo-source/` (original logo files).
 - **`dist/` is never committed.** Vercel builds from source.
 - **Screenshot branches (`pr-assets/*`) must contain a `vercel.json` with
   `{"git":{"deploymentEnabled":false}}`.** Without it, Vercel tries to build the branch (it has no

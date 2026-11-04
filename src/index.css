@@ -134,6 +134,24 @@ body {
   .timeline > li.lit > * { opacity: 1; transform: none; }
 }
 
+/* Logo chips: sky-700 by default, original colours while the timeline item is hovered or holds focus.
+   Opacity and colour only. The raster's mask-image is set inline by LogoChip. */
+.logo-mono { background: currentColor; mask: center / contain no-repeat; }
+.logo-color { opacity: 0; }
+.timeline > li:is(:hover, :focus-within) .logo-mono { opacity: 0; }
+.timeline > li:is(:hover, :focus-within) .logo-color { opacity: 1; }
+.timeline > li:is(:hover, :focus-within) .logo-leaf { color: #d52b1e; }
+/* Touch screens have no hover: colours arrive when the scroll line lights the item, and stay, like the line fill. */
+@media (hover: none) {
+  .timeline > li.lit .logo-mono { opacity: 0; }
+  .timeline > li.lit .logo-color { opacity: 1; }
+  .timeline > li.lit .logo-leaf { color: #d52b1e; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .logo-mono, .logo-color { transition: opacity 0.2s; }
+  .logo-leaf { transition: color 0.2s; }
+}
+
 /* --- Mobile mini bar (App toggles .on when the hero card leaves the viewport) --- */
 :root { --bar-h: calc(3.5rem + env(safe-area-inset-top)); }
 @media (max-width: 1023px) {
@@ -205,6 +223,10 @@ body {
 @container (width < 130px) {
   .pc-back p { font-size: 10px; }
   .pc-back p:not(:first-child) { display: none; }
+}
+/* Desktop card: lifts the pills clear of the mascot. Phone cards are big enough to stay centred. */
+@container (130px <= width < 200px) {
+  .pc-back { padding-bottom: 14cqw; }
 }
 @media (min-width: 1024px) {
   .pc-desk { width: 10rem; }
