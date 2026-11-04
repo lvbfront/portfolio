@@ -16,6 +16,14 @@ const socials = [
 // `link` turns that part of the role into a link. `logo` is a key from LogoChip.jsx.
 const experience = [
   {
+    logo: 'emcrey',
+    role: 'Associate Engineer',
+    place: 'eMcREY — Riyadh, Saudi Arabia',
+    date: 'Nov 2026–Present',
+    description:
+      'Working on payments technology for banks in Saudi Arabia and the wider region, at a company that builds card, payment, and open banking infrastructure.',
+  },
+  {
     logo: 'maple',
     role: 'AI Safety Research Scholar (SUDS Program)',
     link: { label: 'SUDS Program', href: 'https://datasciences.utoronto.ca/suds-cohort-program/' },

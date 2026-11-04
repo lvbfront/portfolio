@@ -1,9 +1,11 @@
 import uqu from '../assets/logos/uqu.webp'
 import kaust from '../assets/logos/kaust.webp'
+import emcrey from '../assets/logos/emcrey.webp'
 
 const raster = {
   uqu: { src: uqu, alt: 'Umm Al-Qura University' },
   kaust: { src: kaust, alt: 'KAUST' },
+  emcrey: { src: emcrey, alt: 'eMcREY' },
 }
 
 const icon = 'size-[70%]'

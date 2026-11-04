@@ -5,7 +5,8 @@ session as any change it describes.
 
 ## 1. Overview
 
-- **Owner:** Abdullah Bukhari (AB) — Full-Stack AI Engineer.
+- **Owner:** Abdullah Bukhari (AB) — Full-Stack AI Engineer. Current role: Associate Engineer at eMcREY
+  (Riyadh, since Nov 2026).
   GitHub [lvbfront](https://github.com/lvbfront).
 - **What this is:** a single-page personal portfolio plus two project pages (`/cdg`, `/sky-soarer`). Content is
   hard-coded in arrays — there is no CMS, database or backend.
@@ -74,7 +75,7 @@ src/
     Blob.jsx            the mascot, inline SVG
     LogoChip.jsx        institution logo chip for the Experience/Education timelines — see §5
     Contact.jsx         EmailJS contact form
-  assets/logos/         uqu.webp, kaust.webp: transparent 160×160 logos, imported by LogoChip
+  assets/logos/         emcrey.webp, uqu.webp, kaust.webp: transparent 160×160 logos, imported by LogoChip
   pages/
     Home.jsx            all homepage content arrays + homepage scroll logic
     Cdg.jsx             ClinicalDenoiseGuard page: hero, evidence, problem, scroll story, findings
@@ -174,7 +175,7 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
 - Under reduced motion the animations are switched off, the line shows full, the cursor is hidden
   and all items are visible.
 - **Logo convention — `LogoChip` + `.logo-*` in `index.css`:** each item's `logo` field is a key in
-  `LogoChip.jsx` (`uqu`, `kaust`, `maple`, `building`, `code`). The chip is 32px below `sm`, 40px from
+  `LogoChip.jsx` (`emcrey`, `uqu`, `kaust`, `maple`, `building`, `code`). The chip is 32px below `sm`, 40px from
   `sm` (white, `rounded-xl`, `sky-100` border, logo ~70%), in a flex row with the text block, and starts
   at the item's `pl-6`, 13px clear of the mascot. **Everything is `sky-700` by default and shows its
   original colours on hover/focus-within of the item**, opacity/colour only, 200ms, instant under reduced
@@ -182,7 +183,7 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
 - **Raster logos** live in `src/assets/logos/` as transparent 160×160 WebP, one file per logo with no
   tinted copy: the tint is `mask-image` on that WebP over `background: currentColor`, and the colour
   version is an `<img>` crossfaded on top. The mask needs real transparency, so white details inside a
-  logo must be cut out too (KAUST's stripes are). The mask loads on render, so `loading="lazy"` on the
+  logo must be cut out too (KAUST's stripes and eMcREY's ring centres are). The mask loads on render, so `loading="lazy"` on the
   `<img>` doesn't delay the download. Originals and the one-off `sharp` script (run from a temp install,
   never in `package.json`) are in the gitignored `logo-source/`.
 - **Maple leaf** is the 11-point leaf subpath of Wikimedia's `Flag_of_Canada.svg` (public domain),
