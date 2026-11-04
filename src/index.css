@@ -224,6 +224,10 @@ body {
   .pc-back p { font-size: 10px; }
   .pc-back p:not(:first-child) { display: none; }
 }
+/* Desktop card: lifts the pills clear of the mascot. Phone cards are big enough to stay centred. */
+@container (130px <= width < 200px) {
+  .pc-back { padding-bottom: 14cqw; }
+}
 @media (min-width: 1024px) {
   .pc-desk { width: 10rem; }
   /* Short screens: tighten the column's own spacing rather than shrinking the card. */

@@ -203,7 +203,8 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
   the front only.
 - Back face sizes its text with container query units (`cqw`) so it fits the 160px desktop card and
   the ~274px mobile one; below 130px wide only the first highlight shows (the current role, so keep it first). Three
-  lines is the limit: a fourth fills the card and runs into the mascot at every size.
+  lines is the limit: a fourth fills the card and runs into the mascot at every size. On the 160px
+  desktop card, `padding-bottom: 14cqw` (container query, 130–200px wide) lifts the pills 3.7px clear of the mascot.
 - Desktop card is a fixed 10rem; short viewports tighten the column (`.sidecol`, `.sidenav`) instead
   of shrinking the card.
 
