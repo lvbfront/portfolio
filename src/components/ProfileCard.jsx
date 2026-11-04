@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Blob from './Blob.jsx'
 import { onFrame } from '../scroll.js'
 
-const highlights = ['Research @ University of Toronto', 'AI Engineer Intern @ First City', 'KAUST Academy AI Specialization']
+const highlights = ['Associate Engineer @ eMcREY', 'Research @ University of Toronto', 'KAUST Academy AI Specialization']
 
 // Flips 0 → 180deg over the first 70vh of scrolling on desktop (sticky column), 25vh on mobile
 // (the card scrolls away with the page, so the flip must finish while it's still on screen).

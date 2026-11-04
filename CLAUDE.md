@@ -202,7 +202,8 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
 - One-time wobble on `.pc-wobble` 900ms after load, to hint it's interactive; "tap to flip" badge on
   the front only.
 - Back face sizes its text with container query units (`cqw`) so it fits the 160px desktop card and
-  the ~274px mobile one; below 130px wide only the first highlight shows.
+  the ~274px mobile one; below 130px wide only the first highlight shows (the current role, so keep it first). Three
+  lines is the limit: a fourth fills the card and runs into the mascot at every size.
 - Desktop card is a fixed 10rem; short viewports tighten the column (`.sidecol`, `.sidenav`) instead
   of shrinking the card.
 
