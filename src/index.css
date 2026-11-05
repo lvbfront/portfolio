@@ -210,7 +210,7 @@ body {
 }
 .pc-back {
   transform: rotateY(180deg);
-  /* sized from the card's width (cqw) so the highlights fit the 80–160px desktop card and the big mobile one */
+  /* sized from the card's width (cqw) so the highlights fit every card, desktop and mobile */
   padding: 6cqw;
   gap: 4cqw;
 }
@@ -224,17 +224,21 @@ body {
   .pc-back p { font-size: 10px; }
   .pc-back p:not(:first-child) { display: none; }
 }
-/* Desktop card: lifts the pills clear of the mascot. Phone cards are big enough to stay centred. */
+/* Small cards (very short laptop screens, very narrow phones): lifts the pills clear of the mascot. */
 @container (130px <= width < 200px) {
   .pc-back { padding-bottom: 14cqw; }
 }
 @media (min-width: 1024px) {
-  .pc-desk { width: 10rem; }
-  /* Short screens: tighten the column's own spacing rather than shrinking the card. */
-  @media (max-height: 860px) {
-    .sidecol { padding-block: 2rem; }
+  .pc-desk { width: 13.75rem; }
+  /* Up to 960px tall the full-spacing column doesn't fit: tighten the spacing, then let the card give way
+     (450px is everything else in the column) rather than clip the nav or the social icons. */
+  @media (max-height: 960px) {
+    .pc-desk { width: clamp(10rem, calc((100vh - 450px) * 0.8), 13.75rem); }
+    .sidecol { padding-block: clamp(1rem, calc((100vh - 693px) / 2), 4rem); }
+    .sidecol .pc-desk { margin-bottom: 1rem; }
+    .sidecol > ul { margin-top: 1rem; }
     .sidenav { margin-top: 1rem; }
-    .sidenav a { padding-block: 0.25rem; }
+    .sidenav a { padding-block: 0.125rem; }
   }
 }
 
