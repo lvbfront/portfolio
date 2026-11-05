@@ -54,6 +54,10 @@ npm run lint         # oxlint
 
 - Tests: none. Verification in this project has been done by driving a real browser
   (puppeteer-core against the installed Chrome) plus Lighthouse against `npm run preview`.
+- **Test performance plugged in.** On battery under 20%, Chrome caps rendering at 30fps, even on `about:blank`, and it
+  feels like site lag. It was mistaken for a regression once: rAF sat at 33.3ms with the main thread ~8% busy, and the
+  same builds ran at 60fps on AC power. Check with `pmset -g batt` before tracing. Tracing `a3bb050` against `f00ca51`
+  per section found no regression (all sections ≤0.2ms per frame apart, about 1–4ms per frame, none over 16.67ms, no long tasks).
 - Lighthouse runs used `http://localhost:4173/`, `http://localhost:4173/#/cdg` and `http://localhost:4173/#/sky-soarer`.
 - Screenshots of a specific story chapter: `http://localhost:4173/#/cdg?ch=N` or `#/sky-soarer?ch=N` (see §5);
   of a Home project's catch moment: `http://localhost:4173/#/?catch=N` (N = 1–6, see The Catch in §5).
