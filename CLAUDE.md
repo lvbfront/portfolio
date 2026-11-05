@@ -11,8 +11,11 @@ session as any change it describes.
 - **What this is:** a single-page personal portfolio plus two project pages (`/cdg`, `/sky-soarer`). Content is
   hard-coded in arrays — there is no CMS, database or backend.
 - **Repo:** https://github.com/lvbfront/portfolio (this folder is the repo root).
-- **Live URL:** deployed on Vercel from `main`; the production domain is not recorded in the repo
-  (no `vercel.json`, no `.vercel/`) — **(unverified)**, fill it in here once confirmed.
+- **Live URL:** https://awb.sa, deployed on Vercel (project `abdullah-bukhari`) from `main`. `www.awb.sa` and
+  `abdullah-bukhari-puce.vercel.app` redirect to it with a 308, set on the Vercel project, not in this repo (no
+  `vercel.json`, no `.vercel/`). `index.html` has `<link rel="canonical" href="https://awb.sa/">`; hash routes share it.
+- **DNS:** registrar SOUQ, nameservers `pns01.t2.sa` / `pns02.t2.sa`. Apex: A `216.198.79.1` and A `64.29.17.1`;
+  `www`: CNAME `ca44f73fa115cac3.vercel-dns-017.com.`. These are the values Vercel returned for this project.
 - **Old site:** `../myApp` (outside this repo) is the previous portfolio — **read-only reference**.
   Never edit it. It is not deployed and not part of this repo.
 
@@ -665,8 +668,7 @@ over a scrolling page. The stacked cards are gone — replaced by The Catch.)
 ## 11. Open items / improvement list
 
 1. **Resolve the AUC wording** (owner decision) and make Home and `/cdg` consistent.
-2. **Confirm the production URL** and record it in §1; check Web Analytics is receiving data and
-   that best-practices is back to 100 on the deployment.
+2. Check Web Analytics is receiving data and that best-practices is back to 100 on the deployment.
 3. Consider updating the CDG card blurb on the homepage to match the sharper framing of the write-up
    (detection easy / correction hard).
 4. Shrink `apple-touch-icon.png`.
