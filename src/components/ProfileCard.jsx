@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import Blob from './Blob.jsx'
 import { onFrame } from '../scroll.js'
 
-const highlights = ['Associate Engineer @ eMcREY', 'Research @ University of Toronto', 'KAUST Academy AI Specialization']
+const highlights = [
+  ['Associate Engineer', 'eMcREY'],
+  ['AI Safety Research', 'University of Toronto'],
+  ['AI Specialization', 'KAUST Academy'],
+]
 
 // Flips 0 → 180deg over the first 70vh of scrolling on desktop (sticky column), 25vh on mobile
 // (the card scrolls away with the page, so the flip must finish while it's still on screen).
@@ -38,11 +42,11 @@ export default function ProfileCard({ className = '' }) {
             <div className="pc-face relative">
               <img
                 src="/me.webp"
-                srcSet="/me-200.webp 200w, /me.webp 400w"
-                sizes="(min-width: 1024px) 160px, 80vw"
+                srcSet="/me-200.webp 200w, /me.webp 440w"
+                sizes="(min-width: 1024px) 220px, 80vw"
                 alt="Abdullah"
-                width="400"
-                height="500"
+                width="440"
+                height="550"
                 fetchPriority="high"
                 className="size-full object-cover rounded-2xl border border-sky-100 shadow-xl shadow-sky-200/60"
               />
@@ -55,8 +59,11 @@ export default function ProfileCard({ className = '' }) {
               </span>
             </div>
             <div className="pc-face pc-back flex flex-col justify-center overflow-hidden rounded-2xl text-left bg-gradient-to-br from-sky-700 via-sky-800 to-sky-900 shadow-xl shadow-sky-200/60">
-              {highlights.map((h) => (
-                <p key={h} className="rounded-xl bg-white/10 border border-white/20 font-semibold text-white">{h}</p>
+              {highlights.map(([role, org]) => (
+                <p key={role} className="rounded-xl border border-white/20 bg-white/10 whitespace-nowrap text-white">
+                  <span className="block font-medium">{role}</span>
+                  <span className="block text-[0.85em] text-white/85">{org}</span>
+                </p>
               ))}
               <Blob className="pc-mark absolute bottom-3 right-3" size={24} />
             </div>

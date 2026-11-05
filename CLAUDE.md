@@ -54,6 +54,10 @@ npm run lint         # oxlint
 
 - Tests: none. Verification in this project has been done by driving a real browser
   (puppeteer-core against the installed Chrome) plus Lighthouse against `npm run preview`.
+- **Test performance plugged in.** On battery under 20%, Chrome caps rendering at 30fps, even on `about:blank`, and it
+  feels like site lag. It was mistaken for a regression once: rAF sat at 33.3ms with the main thread ~8% busy, and the
+  same builds ran at 60fps on AC power. Check with `pmset -g batt` before tracing. Tracing `a3bb050` against `f00ca51`
+  per section found no regression (all sections ≤0.2ms per frame apart, about 1–4ms per frame, none over 16.67ms, no long tasks).
 - Lighthouse runs used `http://localhost:4173/`, `http://localhost:4173/#/cdg` and `http://localhost:4173/#/sky-soarer`.
 - Screenshots of a specific story chapter: `http://localhost:4173/#/cdg?ch=N` or `#/sky-soarer?ch=N` (see §5);
   of a Home project's catch moment: `http://localhost:4173/#/?catch=N` (N = 1–6, see The Catch in §5).
@@ -84,7 +88,8 @@ public/
   favicon.svg           simplified mascot icon
   favicon-32.png        PNG fallback
   apple-touch-icon.png  180px
-  me.webp me-200.webp   hero photo (400px / 200px)
+  me.webp me-200.webp   hero photo (440×550 / 200×250); me.webp is the 734×917 crop at x=154, y=570 of photo-source/me.jpg.
+                        The preload in index.html must match the <img> srcset/sizes in ProfileCard.jsx
   cdg/                  poster.webp (1400w) + poster-700/-500.webp, team-toronto.webp, team-kaust.webp
                         (/cdg's own; the events section uses public/events/ only)
   projects/sky-soarer/  the game's screenshots, <name>.webp (≤1400w) + <name>-700.webp (+ hero-500) — see §5
@@ -201,12 +206,16 @@ Where the browser supports scroll-driven animations, CSS does the work and JS is
 - Tap adds 180° on `.pc-tap`, which composes with the scroll flip on `.pc-inner`.
 - One-time wobble on `.pc-wobble` 900ms after load, to hint it's interactive; "tap to flip" badge on
   the front only.
-- Back face sizes its text with container query units (`cqw`) so it fits the 160px desktop card and
-  the ~274px mobile one; below 130px wide only the first highlight shows (the current role, so keep it first). Three
-  lines is the limit: a fourth fills the card and runs into the mascot at every size. On the 160px
-  desktop card, `padding-bottom: 14cqw` (container query, 130–200px wide) lifts the pills 3.7px clear of the mascot.
-- Desktop card is a fixed 10rem; short viewports tighten the column (`.sidecol`, `.sidenav`) instead
-  of shrinking the card.
+- Back face sizes its text with container query units (`cqw`) so it fits every card; below 130px wide only the first
+  highlight shows (the current role, so keep it first). Each pill is two fixed lines, role then organisation, set
+  `whitespace-nowrap`: at the smallest card checked (186px) the longest line still has 32px spare, so re-check that if a
+  label grows. Three pills is the limit: a fourth fills the card and runs into the mascot. `padding-bottom: 14cqw`
+  (container query, 130–200px wide) keeps the pills clear of the mascot on small cards, which now means screens under
+  about 700px tall and phones under about 300px wide.
+- Desktop card is 220×275 (`.pc-desk`). Up to 960px tall the full-spacing column doesn't fit, so spacing tightens
+  (`.sidecol`, `.sidenav`) and the card's width is `clamp(10rem, (100vh - 450px) * 0.8, 13.75rem)`, where 450px is everything
+  else in the column: 216×270 at 720px tall, 200×250 at 700px, 220×275 from 725px up. Adding to the column means updating
+  the 450px (and the 693px in its padding).
 
 ### Projects — "The Catch" — `Catch` / `catchTimeline` / `Fish` in `src/pages/Home.jsx`
 - **Replaced the stacked project cards on purpose** (owner's explicit decision, Oct 2026): the old
@@ -637,9 +646,6 @@ over a scrolling page. The stacked cards are gone — replaced by The Catch.)
 - **AUC wording is inconsistent.** `src/pages/Home.jsx` says "≈0.96 AUC" (experience entry and the
   CDG project card) while `src/pages/Cdg.jsx` says "near-perfect AUC". **The owner decides** which
   is correct; then make both match.
-- **Preload `imagesizes` mismatch:** `index.html` preloads `/me.webp` with
-  `imagesizes="(min-width: 1024px) 160px, 70vw"`, but `ProfileCard.jsx` uses `sizes="… 80vw"`. Same
-  candidate wins today, so it's cosmetic, but they should agree.
 - **Mascot drawing is duplicated** in `Blob.jsx` and `favicon.js` (plus `public/favicon.svg`).
   A change to the face means editing all three.
 - **`public/apple-touch-icon.png` is 43 kB** for a 180px icon — could be optimised.
@@ -663,8 +669,7 @@ over a scrolling page. The stacked cards are gone — replaced by The Catch.)
    that best-practices is back to 100 on the deployment.
 3. Consider updating the CDG card blurb on the homepage to match the sharper framing of the write-up
    (detection easy / correction hard).
-4. Fix the `imagesizes` / `sizes` mismatch.
-5. Shrink `apple-touch-icon.png`.
-6. Factor the mascot into one source of truth if it changes again.
-7. Optional: add `og:`/`twitter:` meta tags and a small OG image for link previews.
-8. Optional: a lightweight CI (`npm run build && npm run lint`) on pull requests.
+4. Shrink `apple-touch-icon.png`.
+5. Factor the mascot into one source of truth if it changes again.
+6. Optional: add `og:`/`twitter:` meta tags and a small OG image for link previews.
+7. Optional: a lightweight CI (`npm run build && npm run lint`) on pull requests.
